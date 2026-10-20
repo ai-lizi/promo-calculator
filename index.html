@@ -1,0 +1,3444 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>大促优惠计算工具</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: oklch(96% 0.018 78);
+      --paper: oklch(99% 0.008 82);
+      --ink: oklch(22% 0.035 65);
+      --muted: oklch(48% 0.035 65);
+      --line: oklch(88% 0.025 72);
+      --line-strong: oklch(75% 0.05 62);
+      --accent: oklch(59% 0.18 33);
+      --accent-dark: oklch(42% 0.15 32);
+      --gold: oklch(72% 0.14 78);
+      --green: oklch(58% 0.12 153);
+      --blue: oklch(54% 0.13 230);
+      --rose: oklch(61% 0.16 12);
+      --shadow: 0 20px 70px oklch(45% 0.06 55 / 0.14);
+      --radius: 8px;
+      --font: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: var(--font);
+      color: var(--ink);
+      background:
+        linear-gradient(90deg, oklch(92% 0.028 80 / 0.34) 1px, transparent 1px),
+        linear-gradient(0deg, oklch(92% 0.028 80 / 0.34) 1px, transparent 1px),
+        radial-gradient(circle at 18% 8%, oklch(90% 0.08 73 / 0.75), transparent 34rem),
+        linear-gradient(145deg, var(--bg), oklch(94% 0.02 112));
+      background-size: 28px 28px, 28px 28px, auto, auto;
+      letter-spacing: 0;
+    }
+
+    button, input, select {
+      font: inherit;
+    }
+
+    input[type="number"] {
+      appearance: textfield;
+      -moz-appearance: textfield;
+    }
+
+    input[type="number"]::-webkit-outer-spin-button,
+    input[type="number"]::-webkit-inner-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+
+    button {
+      min-height: 40px;
+      border: 1px solid var(--line-strong);
+      border-radius: 7px;
+      color: var(--ink);
+      background: var(--paper);
+      cursor: pointer;
+      transition: transform 140ms ease, border-color 140ms ease, background 140ms ease;
+    }
+
+    button:hover { transform: translateY(-1px); border-color: var(--accent); }
+    button:active { transform: translateY(0); }
+    button:focus-visible, input:focus-visible, select:focus-visible {
+      outline: 3px solid oklch(78% 0.12 47 / 0.7);
+      outline-offset: 2px;
+    }
+
+    .app {
+      width: min(1320px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 32px 0 max(32px, env(safe-area-inset-bottom));
+    }
+
+    .masthead {
+      display: grid;
+      grid-template-columns: minmax(360px, 0.78fr) minmax(520px, 1.22fr);
+      gap: 28px;
+      align-items: stretch;
+      padding: 18px 0 30px;
+      border-bottom: 2px solid var(--ink);
+    }
+
+    .hero-copy {
+      display: flex;
+      min-height: 430px;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 26px;
+      border: 2px solid var(--ink);
+      border-radius: var(--radius);
+      background:
+        linear-gradient(135deg, oklch(99% 0.012 84), oklch(94% 0.042 78));
+      box-shadow: 10px 10px 0 oklch(78% 0.12 68);
+    }
+
+    .eyebrow {
+      width: fit-content;
+      margin: 0 0 14px;
+      padding: 6px 10px;
+      border: 1px solid oklch(66% 0.09 42);
+      border-radius: 999px;
+      color: var(--accent-dark);
+      background: oklch(96% 0.045 62);
+      font-size: 0.78rem;
+      font-weight: 850;
+    }
+
+    h1 {
+      margin: 0;
+      max-width: 13ch;
+      font-size: clamp(2.25rem, 5vw, 5rem);
+      line-height: 0.92;
+      letter-spacing: 0;
+    }
+
+    .hero-actions {
+      display: grid;
+      gap: 10px;
+      margin-top: 24px;
+    }
+
+    .rule-note {
+      padding: 14px;
+      border: 1px solid oklch(72% 0.07 42);
+      border-radius: var(--radius);
+      color: oklch(31% 0.06 52);
+      background: oklch(96% 0.035 68);
+      line-height: 1.55;
+      font-size: 0.9rem;
+      font-weight: 700;
+    }
+
+    .rule-note strong {
+      color: var(--accent-dark);
+    }
+
+    .formula-card {
+      display: grid;
+      align-content: start;
+      gap: 14px;
+      width: 100%;
+      padding: 16px;
+      border: 2px solid var(--ink);
+      border-radius: var(--radius);
+      background: oklch(99% 0.01 86);
+      box-shadow: 10px 10px 0 oklch(80% 0.085 205);
+    }
+
+    .formula-title {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: center;
+      margin-bottom: 12px;
+      font-weight: 800;
+    }
+
+    .rules-list {
+      display: grid;
+      gap: 10px;
+    }
+
+    .rule-item {
+      display: grid;
+      grid-template-columns: 34px minmax(0, 1fr);
+      gap: 10px;
+      align-items: start;
+      padding: 11px;
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      background: oklch(98% 0.011 84);
+      line-height: 1.45;
+      font-size: 0.88rem;
+    }
+
+    .rule-item b {
+      display: grid;
+      width: 28px;
+      height: 28px;
+      place-items: center;
+      border-radius: 999px;
+      color: oklch(99% 0.012 80);
+      background: var(--ink);
+      font-size: 0.78rem;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .rule-item strong {
+      display: block;
+      margin-bottom: 2px;
+      color: var(--ink);
+    }
+
+    .rule-item span {
+      color: var(--muted);
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr);
+      gap: 24px;
+      margin-top: 28px;
+      align-items: start;
+    }
+
+    .panel {
+      min-width: 0;
+      border: 2px solid var(--ink);
+      border-radius: var(--radius);
+      background: var(--paper);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .panel-header {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      align-items: center;
+      padding: 16px 18px;
+      border-bottom: 1px solid var(--line);
+      background: oklch(96% 0.025 80);
+    }
+
+    .panel-tools {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: flex-end;
+    }
+
+    .panel-header h2 {
+      margin: 0;
+      font-size: 1.02rem;
+      line-height: 1.2;
+    }
+
+    .panel-body {
+      padding: 18px;
+    }
+
+    .section {
+      padding: 18px 0;
+      border-top: 1px solid var(--line);
+    }
+
+    .section:first-child { padding-top: 0; border-top: 0; }
+
+    .section-title {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+
+    .section-title h3 {
+      margin: 0;
+      font-size: 0.95rem;
+    }
+
+    .hint {
+      margin: 8px 0 0;
+      color: var(--muted);
+      line-height: 1.5;
+      font-size: 0.88rem;
+    }
+
+    .table-wrap {
+      width: 100%;
+      max-width: 100%;
+      overflow-x: auto;
+      overflow-y: hidden;
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      background: oklch(99% 0.006 84);
+      scrollbar-gutter: stable;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 620px;
+    }
+
+    #productRows {
+      vertical-align: inherit;
+    }
+
+    #productRows:where(tbody),
+    #productRows:where(tbody) tr {
+      min-width: 960px;
+    }
+
+    .section:first-child table {
+      min-width: 960px;
+    }
+
+    #couponSections table {
+      min-width: 1260px;
+    }
+
+    th, td {
+      padding: 8px 6px;
+      border-bottom: 1px solid var(--line);
+      vertical-align: middle;
+      text-align: left;
+      font-size: 0.88rem;
+    }
+
+    tbody tr:last-child td {
+      border-bottom: 0;
+    }
+
+    th {
+      color: var(--muted);
+      font-weight: 750;
+      white-space: nowrap;
+    }
+
+    input, select {
+      width: 100%;
+      min-height: 36px;
+      padding: 7px 9px;
+      border: 1px solid var(--line-strong);
+      border-radius: 6px;
+      color: var(--ink);
+      background: oklch(100% 0.004 84);
+    }
+
+    input[type="checkbox"] {
+      width: 18px;
+      min-height: 18px;
+      accent-color: var(--accent);
+    }
+
+    .small-input { max-width: 92px; }
+    .wide-input { min-width: 128px; }
+    .name-input { min-width: 150px; }
+
+    .product-special-cell {
+      min-width: 142px;
+    }
+
+    .product-special-control {
+      display: grid;
+      grid-template-columns: 22px minmax(78px, 1fr);
+      gap: 6px;
+      align-items: center;
+    }
+
+    .product-special-control input[type="number"] {
+      min-width: 78px;
+    }
+
+    .product-special-control input[type="number"]:disabled {
+      color: var(--muted);
+      background: oklch(94% 0.012 82);
+      border-color: var(--line);
+    }
+
+    .percent-input-wrap {
+      position: relative;
+      display: block;
+      min-width: 78px;
+    }
+
+    .percent-input-wrap input {
+      padding-right: 28px;
+    }
+
+    .percent-input-wrap::after {
+      content: "%";
+      position: absolute;
+      top: 50%;
+      right: 9px;
+      transform: translateY(-50%);
+      color: var(--muted);
+      font-size: 0.86rem;
+      font-weight: 850;
+      pointer-events: none;
+    }
+
+    .fixed-field,
+    .percent-field {
+      min-width: 96px;
+    }
+
+    tr[data-kind="fixed"] .percent-field input,
+    tr[data-kind="percent"] .fixed-field input {
+      display: none;
+    }
+
+    tr[data-kind="fixed"] .percent-field::after,
+    tr[data-kind="percent"] .fixed-field::after {
+      content: "—";
+      color: var(--muted);
+      font-weight: 800;
+    }
+
+    .inflate-field {
+      min-width: 300px;
+    }
+
+    tr:not([data-inflate="true"]) .inflate-options {
+      display: none;
+    }
+
+    tr:not([data-inflate="true"]) .inflate-field::after {
+      content: "—";
+      color: var(--muted);
+      font-weight: 800;
+    }
+
+    .inflate-options {
+      display: grid;
+      gap: 8px;
+      min-width: 290px;
+    }
+
+    .inflate-option {
+      display: grid;
+      grid-template-columns: auto minmax(72px, 1fr) auto minmax(72px, 1fr) 32px;
+      gap: 6px;
+      align-items: center;
+    }
+
+    .inflate-option span {
+      color: var(--muted);
+      font-size: 0.78rem;
+      font-weight: 850;
+      white-space: nowrap;
+    }
+
+    .inflate-option input {
+      min-width: 72px;
+    }
+
+    .mini-action {
+      min-height: 32px;
+      padding-inline: 9px;
+      font-size: 0.78rem;
+      font-weight: 850;
+    }
+
+    .coupon-preview {
+      width: min(24vw, 240px);
+      min-width: 170px;
+      max-width: 260px;
+      color: var(--accent-dark);
+      font-weight: 800;
+      line-height: 1.35;
+      overflow-wrap: anywhere;
+    }
+
+    .scope-cell {
+      min-width: 220px;
+    }
+
+    .scope-options {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(92px, 1fr));
+      gap: 6px 10px;
+      max-width: 320px;
+    }
+
+    .scope-option {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+      min-height: 28px;
+      color: var(--ink);
+      font-size: 0.82rem;
+      font-weight: 750;
+      line-height: 1.25;
+    }
+
+    .scope-option input {
+      flex: 0 0 auto;
+    }
+
+    .warning-list {
+      display: none;
+      gap: 8px;
+      margin: 12px 0 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .warning-list:not(:empty) {
+      display: grid;
+    }
+
+    .warning-list li {
+      padding: 10px 12px;
+      border: 1px solid oklch(77% 0.1 42);
+      border-radius: 7px;
+      background: oklch(96% 0.04 60);
+      color: oklch(36% 0.09 42);
+      font-size: 0.86rem;
+      font-weight: 750;
+      line-height: 1.45;
+    }
+
+    .streamer-red-groups {
+      display: grid;
+      gap: 14px;
+    }
+
+    .streamer-red-group {
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      background: oklch(98% 0.011 84);
+      overflow: hidden;
+    }
+
+    .streamer-red-group-head {
+      display: grid;
+      grid-template-columns: minmax(170px, 0.7fr) minmax(260px, 1fr) auto;
+      gap: 12px;
+      align-items: start;
+      padding: 12px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .group-field {
+      display: grid;
+      gap: 6px;
+    }
+
+    .group-field > span {
+      color: var(--muted);
+      font-size: 0.8rem;
+      font-weight: 800;
+    }
+
+    .group-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: flex-end;
+    }
+
+    .streamer-red-wrap {
+      padding: 12px;
+      border-top: 1px solid var(--line);
+      background: oklch(99% 0.006 84);
+    }
+
+    .streamer-red-list {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(138px, 1fr));
+      gap: 10px;
+    }
+
+    .streamer-red-item {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 32px;
+      gap: 6px;
+      align-items: end;
+      padding: 8px;
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      background: var(--paper);
+    }
+
+    .streamer-red-item label {
+      display: grid;
+      gap: 5px;
+      color: var(--muted);
+      font-size: 0.78rem;
+      font-weight: 800;
+    }
+
+    .streamer-red-item input {
+      min-width: 0;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .vip-setting {
+      display: grid;
+      grid-template-columns: minmax(130px, auto) 40px minmax(0, 1fr);
+      gap: 14px;
+      align-items: center;
+      padding: 12px 0;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .vip-setting strong {
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+
+    .vip-setting span {
+      line-height: 1.45;
+      font-weight: 750;
+    }
+
+    .calc-params {
+      margin-top: 12px;
+    }
+
+    .calc-params summary {
+      width: fit-content;
+      min-height: 36px;
+      padding: 8px 10px;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      color: var(--muted);
+      background: oklch(98% 0.012 84);
+      cursor: pointer;
+      font-size: 0.86rem;
+      font-weight: 800;
+    }
+
+    .calc-params summary:hover {
+      color: var(--accent-dark);
+      border-color: var(--line-strong);
+    }
+
+    .calc-params[open] summary {
+      margin-bottom: 10px;
+    }
+
+    .params-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(180px, 1fr));
+      gap: 10px 14px;
+      padding: 12px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: oklch(98% 0.01 84);
+    }
+
+    .param-field {
+      display: grid;
+      gap: 6px;
+    }
+
+    .param-field label {
+      color: var(--muted);
+      font-size: 0.82rem;
+      font-weight: 800;
+    }
+
+    .button-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    .primary {
+      border-color: var(--accent-dark);
+      background: var(--accent);
+      color: oklch(99% 0.012 80);
+      font-weight: 800;
+      padding-inline: 16px;
+    }
+
+    .ghost {
+      border-color: var(--line);
+      background: transparent;
+    }
+
+    .utility {
+      min-height: 36px;
+      padding-inline: 11px;
+      border-color: var(--line);
+      background: oklch(98% 0.012 84);
+      font-size: 0.86rem;
+      font-weight: 800;
+    }
+
+    .calc-submit-area {
+      display: flex;
+      justify-content: flex-end;
+      align-items: center;
+      gap: 12px;
+      padding: 18px 0 0;
+      border-top: 2px solid var(--ink);
+    }
+
+    .calc-submit-area .primary {
+      min-width: min(100%, 220px);
+    }
+
+    .danger {
+      color: var(--rose);
+      border-color: oklch(80% 0.08 18);
+      background: oklch(98% 0.02 25);
+    }
+
+    .remove-btn {
+      width: 36px;
+      padding: 0;
+      color: var(--rose);
+      font-weight: 900;
+    }
+
+    .result-top {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+      padding: 18px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .metric {
+      min-height: 116px;
+      padding: 14px;
+      border: 1px solid var(--line-strong);
+      border-radius: var(--radius);
+      background: oklch(98% 0.013 84);
+    }
+
+    .metric strong {
+      display: block;
+      margin-top: 8px;
+      font-size: clamp(1.9rem, 4vw, 3rem);
+      line-height: 1;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .metric span {
+      color: var(--muted);
+      font-size: 0.84rem;
+      font-weight: 750;
+    }
+
+    .metric.accent {
+      color: oklch(99% 0.012 80);
+      background: linear-gradient(145deg, var(--accent), oklch(50% 0.16 45));
+      border-color: var(--accent-dark);
+    }
+
+    .metric.accent span { color: oklch(92% 0.04 75); }
+
+    .waterfall {
+      padding: 18px;
+    }
+
+    .step {
+      display: grid;
+      grid-template-columns: 28px minmax(0, 1fr) auto;
+      gap: 12px;
+      align-items: start;
+      padding: 12px 0;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .step:last-child { border-bottom: 0; }
+
+    .step-index {
+      display: grid;
+      width: 28px;
+      height: 28px;
+      place-items: center;
+      border-radius: 999px;
+      background: var(--ink);
+      color: var(--paper);
+      font-size: 0.78rem;
+      font-weight: 800;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .step-name {
+      font-weight: 820;
+      line-height: 1.25;
+    }
+
+    .step-detail {
+      margin-top: 4px;
+      color: var(--muted);
+      font-size: 0.86rem;
+      line-height: 1.45;
+    }
+
+    .step-money {
+      text-align: right;
+      font-weight: 850;
+      font-variant-numeric: tabular-nums;
+      white-space: nowrap;
+    }
+
+    .advice-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr);
+      gap: 14px;
+      padding: 0 18px 18px;
+    }
+
+    .advice {
+      border-top: 2px solid var(--ink);
+      padding-top: 12px;
+    }
+
+    .advice h3 {
+      margin: 0 0 10px;
+      font-size: 0.94rem;
+    }
+
+    .advice-list {
+      display: grid;
+      gap: 8px;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .advice-list li {
+      padding: 10px;
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      background: oklch(98% 0.014 85);
+      line-height: 1.45;
+      font-size: 0.88rem;
+    }
+
+    .split-card {
+      display: grid;
+      gap: 12px;
+      background: oklch(99% 0.012 82);
+    }
+
+    .split-card-head {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 12px;
+      font-weight: 850;
+    }
+
+    .split-card-head strong {
+      font-size: 1.05rem;
+      color: var(--ink);
+      white-space: nowrap;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .split-summary-card {
+      display: grid;
+      gap: 10px;
+      border-color: oklch(83% 0.07 70);
+      background: oklch(97% 0.035 76);
+    }
+
+    .split-summary-line {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 12px;
+      font-weight: 850;
+    }
+
+    .split-summary-line strong {
+      font-size: 1.14rem;
+      color: oklch(34% 0.08 58);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .split-route {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .split-products {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .split-product-chip,
+    .split-route-chip {
+      display: inline-flex;
+      align-items: center;
+      min-height: 24px;
+      padding: 3px 8px;
+      border-radius: 999px;
+      background: oklch(94% 0.02 78);
+      color: var(--ink);
+      font-size: 0.78rem;
+      font-weight: 800;
+    }
+
+    .split-payline {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    .split-payitem {
+      display: grid;
+      gap: 2px;
+      padding: 8px;
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      background: oklch(98% 0.012 84);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .split-payitem span {
+      color: var(--muted);
+      font-size: 0.72rem;
+      font-weight: 750;
+    }
+
+    .split-payitem strong {
+      font-size: 0.96rem;
+    }
+
+    .split-benefit-title {
+      margin-top: 2px;
+      color: var(--muted);
+      font-size: 0.76rem;
+      font-weight: 850;
+    }
+
+    .order-consumer {
+      margin: 12px 0;
+      padding: 12px 0;
+      border-block: 1px solid var(--line);
+      overflow-wrap: anywhere;
+    }
+
+    .order-consumer p { margin: 6px 0 0; }
+    .order-breakdown { margin: 16px 24px; }
+    .order-breakdown > summary { cursor: pointer; font-weight: 700; }
+    .add-on-details { margin-top: 12px; }
+    .add-on-details > summary { cursor: pointer; font-weight: 700; }
+    .advice-list > .add-on-option { border: 0; border-top: 1px solid var(--line); border-radius: 0; background: transparent; }
+
+    .split-discounts {
+      display: grid;
+      gap: 8px;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .split-discounts li {
+      padding: 0;
+      border: 0;
+      background: transparent;
+      color: var(--ink);
+    }
+
+    .split-benefit-row {
+      display: grid;
+      grid-template-columns: minmax(86px, 0.34fr) minmax(0, 1fr);
+      gap: 10px;
+      align-items: start;
+      padding: 9px 0;
+      border-top: 1px solid var(--line);
+    }
+
+    .split-benefit-label {
+      display: grid;
+      gap: 2px;
+      color: var(--accent-dark);
+      font-weight: 900;
+    }
+
+    .split-benefit-label small {
+      color: var(--muted);
+      font-size: 0.72rem;
+      font-weight: 850;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .split-benefit-coupons {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .split-coupon-pill {
+      display: inline-flex;
+      align-items: center;
+      max-width: 100%;
+      padding: 4px 7px;
+      border-radius: 7px;
+      background: oklch(96% 0.02 78);
+      color: var(--ink);
+      font-size: 0.78rem;
+      font-weight: 800;
+      line-height: 1.35;
+    }
+
+    .tag {
+      display: inline-block;
+      margin-right: 6px;
+      padding: 2px 6px;
+      border-radius: 999px;
+      background: oklch(91% 0.06 75);
+      color: oklch(34% 0.08 58);
+      font-size: 0.74rem;
+      font-weight: 800;
+      white-space: nowrap;
+    }
+
+    .order-expression {
+      margin: 0;
+      padding: 14px 18px;
+      border-bottom: 1px solid var(--line);
+      background: oklch(95% 0.027 76);
+      color: var(--accent-dark);
+      font-weight: 850;
+      line-height: 1.55;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .result-status {
+      margin: 0;
+      padding: 10px 18px;
+      border-bottom: 1px solid var(--line);
+      color: var(--muted);
+      background: oklch(98% 0.012 84);
+      font-size: 0.86rem;
+      font-weight: 800;
+      line-height: 1.45;
+    }
+
+    .result-status[data-state="stale"] {
+      color: oklch(37% 0.1 42);
+      background: oklch(96% 0.04 62);
+    }
+
+    .result-insights {
+      display: grid;
+      gap: 10px;
+      padding: 14px 18px;
+      border-bottom: 1px solid var(--line);
+      background: oklch(98% 0.018 84);
+    }
+
+    .result-insight-card {
+      display: grid;
+      gap: 8px;
+      padding: 12px;
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      background: oklch(99% 0.01 82);
+    }
+
+    .result-insight-head {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 12px;
+      font-weight: 900;
+    }
+
+    .result-insight-head strong {
+      color: var(--accent-dark);
+      font-variant-numeric: tabular-nums;
+      white-space: nowrap;
+    }
+
+    .result-insight-body {
+      color: var(--muted);
+      font-size: 0.86rem;
+      font-weight: 750;
+      line-height: 1.5;
+    }
+
+    .step {
+      gap: 12px;
+    }
+
+    .step-main {
+      min-width: 0;
+    }
+
+    .step-detail-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 8px;
+    }
+
+    .step-coupon-pill {
+      display: inline-flex;
+      align-items: center;
+      max-width: 100%;
+      padding: 4px 7px;
+      border-radius: 7px;
+      background: oklch(96% 0.018 78);
+      color: var(--ink);
+      font-size: 0.78rem;
+      font-weight: 800;
+      line-height: 1.35;
+    }
+
+    .toast {
+      position: fixed;
+      right: 18px;
+      bottom: 18px;
+      max-width: 360px;
+      padding: 12px 14px;
+      border: 2px solid var(--ink);
+      border-radius: var(--radius);
+      background: var(--paper);
+      box-shadow: 8px 8px 0 oklch(78% 0.12 68);
+      opacity: 0;
+      transform: translateY(10px);
+      pointer-events: none;
+      transition: opacity 180ms ease, transform 180ms ease;
+      line-height: 1.45;
+    }
+
+    .toast.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    @media (max-width: 1040px) {
+      .masthead { grid-template-columns: 1fr; }
+      h1 { max-width: 100%; }
+    }
+
+    @media (max-width: 640px) {
+      .app { width: min(100% - 20px, 1320px); padding-top: 18px; }
+      .masthead { gap: 16px; padding-top: 8px; }
+      .hero-copy { min-height: 0; padding: 18px; }
+      .panel-header { align-items: flex-start; flex-direction: column; }
+      .panel-tools { justify-content: flex-start; }
+      .result-top, .advice-grid { grid-template-columns: 1fr; }
+      .result-insight-head { align-items: flex-start; flex-direction: column; }
+      .streamer-red-group-head { grid-template-columns: 1fr; }
+      .group-actions { justify-content: flex-start; }
+      .calc-submit-area { justify-content: stretch; }
+      .calc-submit-area .primary { width: 100%; }
+      .vip-setting, .params-grid { grid-template-columns: 1fr; }
+      .split-card-head, .split-summary-line { align-items: flex-start; flex-direction: column; }
+      .split-payline { grid-template-columns: 1fr; }
+      .split-benefit-row { grid-template-columns: 1fr; gap: 6px; }
+      .panel-body, .result-top, .result-insights, .waterfall, .advice-grid { padding-inline: 12px; }
+      .coupon-preview { width: 190px; }
+      .formula-card { box-shadow: 5px 5px 0 oklch(79% 0.11 74); }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        scroll-behavior: auto !important;
+        transition-duration: 0.01ms !important;
+        animation-duration: 0.01ms !important;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <header class="masthead">
+      <div class="hero-copy">
+        <div>
+          <p class="eyebrow">大促凑单 · 多券叠加 · 拆单试算</p>
+        <h1>大促优惠计算工具</h1>
+        </div>
+        <div class="hero-actions">
+          <div class="rule-note"><strong>红包规则已纳入计算：</strong>单次下单最多使用 10 个平台红包，消费券每单最多 1 张，膨胀前后属于同一张券。</div>
+          <button class="primary" type="button" onclick="document.getElementById('productRows').scrollIntoView({behavior:'smooth', block:'center'})">开始填商品</button>
+        </div>
+      </div>
+      <aside class="formula-card" aria-label="优惠顺序">
+        <div class="formula-title">
+          <span>计算规则</span>
+          <span>官方说明优惠计算规则</span>
+        </div>
+        <div class="rules-list">
+          <div class="rule-item">
+            <b>1</b>
+            <span><strong>先扣固定优惠</strong>商品原价先扣优惠券、官方立减，再进入后续折扣层。</span>
+          </div>
+          <div class="rule-item">
+            <b>2</b>
+            <span><strong>再算身份和直播优惠</strong>仅 88VIP 用户参与 88 专享折扣；随后计算主播折扣券。</span>
+          </div>
+          <div class="rule-item">
+            <b>3</b>
+            <span><strong>继续扣平台类抵扣</strong>依次计算淘金币、品类加补券。</span>
+          </div>
+          <div class="rule-item">
+            <b>4</b>
+            <span><strong>最后处理红包/消费券</strong>单笔最多使用 10 个平台红包，其中消费券最多 1 张，不因门槛红包上限调整而增加。</span>
+          </div>
+          <div class="rule-item">
+            <b>5</b>
+            <span><strong>再算换新补贴和定金</strong>政府补贴按该商品分摊完前序优惠后的应付金额计算，不扣已付定金；预售商品最后扣除已付定金。</span>
+          </div>
+        </div>
+      </aside>
+    </header>
+
+    <section class="layout">
+      <div class="panel">
+        <div class="panel-header">
+          <h2>输入商品与权益</h2>
+          <div class="panel-tools">
+            <button class="utility" id="downloadDataBtn" type="button">下载配置</button>
+            <button class="utility" id="uploadDataBtn" type="button">上传配置</button>
+            <input id="uploadDataInput" type="file" accept=".xls,.xml" hidden>
+          </div>
+        </div>
+        <div class="panel-body">
+          <div class="section">
+            <div class="section-title">
+              <h3>计划购买商品</h3>
+              <button class="ghost" id="addProductBtn" type="button">添加商品</button>
+            </div>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>商品名</th>
+                    <th>单价</th>
+                    <th>数量</th>
+                    <th>可用 88VIP</th>
+                    <th>预售定金</th>
+                    <th>政府补贴</th>
+                    <th>必须买</th>
+                    <th>删除</th>
+                  </tr>
+                </thead>
+                <tbody id="productRows"></tbody>
+              </table>
+            </div>
+            <p class="hint">“可用 88VIP”表示该商品是否支持 88 专享折扣；预售定金会在最后抵扣已付金额；政府补贴按该商品分摊完前序优惠后的应付金额计算，不扣已付定金。“必须买”会影响拆单建议：必须买商品仍会参与拆分，只是不会被当成可移除凑单品。</p>
+          </div>
+
+          <div class="section" id="couponSections"></div>
+
+          <div class="section">
+            <div class="section-title">
+              <h3>高级设置</h3>
+            </div>
+            <div class="vip-setting">
+              <strong>88VIP 用户</strong>
+              <input id="is88Vip" type="checkbox" checked aria-label="是否为 88VIP 用户">
+              <span>勾选表示你具备 88VIP 身份；每个商品是否能用 88 折，在商品行单独标记。</span>
+            </div>
+            <details class="calc-params">
+              <summary>计算参数</summary>
+              <div class="params-grid">
+                <div class="param-field">
+                  <label for="maxAddAmount">凑单最多试算金额</label>
+                  <input id="maxAddAmount" class="small-input" type="number" min="1" step="1" value="500">
+                </div>
+                <div class="param-field">
+                  <label for="addStep">凑单步长</label>
+                  <input id="addStep" class="small-input" type="number" min="1" step="1" value="1">
+                </div>
+                <div class="param-field">
+                  <label for="redLimit">平台红包上限</label>
+                  <input id="redLimit" class="small-input" type="number" min="1" max="10" step="1" value="10">
+                </div>
+                <div class="param-field">
+                  <label for="thresholdRedLimit">门槛红包上限</label>
+                  <input id="thresholdRedLimit" class="small-input" type="number" min="0" max="10" step="1" value="1">
+                </div>
+              </div>
+              <p class="hint">凑单参数限定试算金额；单笔最多 10 个平台红包。消费券计入门槛红包数量，且每单最多 1 张，不能通过调整上限叠加多张消费券。</p>
+            </details>
+          </div>
+
+          <div class="calc-submit-area">
+            <button class="primary" id="calculateBtn" type="button">开始计算优惠结果</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel" aria-live="polite">
+        <div class="panel-header">
+          <h2>优惠计算结果</h2>
+          <button class="ghost" id="resetBtn" type="button">载入示例</button>
+        </div>
+        <div class="result-top">
+          <div class="metric accent">
+            <span>合单待付金额</span>
+            <strong id="finalPrice">¥0</strong>
+          </div>
+          <div class="metric">
+            <span>合单优惠及已付抵扣</span>
+            <strong id="savedAmount">¥0</strong>
+          </div>
+        </div>
+        <p class="result-status" id="resultStatus" data-state="fresh">结果已按当前输入计算。</p>
+        <div class="advice-grid">
+          <div class="advice">
+            <h3>付款方案与每单用券</h3>
+            <ul class="advice-list" id="splitAdvice"></ul>
+          </div>
+          <div class="advice">
+            <h3>进一步降低必买商品成本</h3>
+            <ul class="advice-list" id="addOnAdvice"></ul>
+          </div>
+        </div>
+        <details class="order-breakdown">
+          <summary>合单对照：优惠计算明细</summary>
+          <p class="order-expression" id="expressionText"></p>
+          <div class="waterfall" id="waterfall"></div>
+        </details>
+      </div>
+    </section>
+  </main>
+  <div class="toast" id="toast" role="status"></div>
+
+  <script>
+    const ORDER = [
+      { key: "coupon", label: "优惠券", color: "gold" },
+      { key: "official", label: "官方立减", color: "accent" },
+      { key: "vip88", label: "88 专享", color: "blue" },
+      { key: "streamer", label: "主播折扣券", color: "green" },
+      { key: "coins", label: "淘金币", color: "gold" },
+      { key: "category", label: "品类加补券", color: "blue" },
+      { key: "red", label: "主播红包/消费券", color: "rose" },
+      { key: "tradeIn", label: "换新补贴", color: "green" },
+      { key: "deposit", label: "已付定金", color: "gold" }
+    ];
+
+    const UI_ORDER = [
+      { key: "coupon", label: "优惠券" },
+      { key: "official", label: "官方立减" },
+      { key: "streamer", label: "主播折扣券" },
+      { key: "coins", label: "淘金币" },
+      { key: "category", label: "品类加补券" },
+      { key: "streamerRed", label: "主播红包" },
+      { key: "consumer", label: "消费券" }
+    ];
+
+    const COUPON_META = {
+      coupon: { title: "优惠券", defaultKind: "fixed", add: "添加优惠券" },
+      official: { title: "官方立减", defaultKind: "fixed", add: "添加立减" },
+      streamer: { title: "主播折扣券", defaultKind: "percent", add: "添加主播券" },
+      coins: { title: "淘金币", defaultKind: "fixed", add: "添加淘金币" },
+      category: { title: "品类加补券", defaultKind: "fixed", add: "添加品类券" },
+      streamerRed: { title: "主播红包", defaultKind: "fixed", add: "添加主播红包" },
+      consumer: { title: "消费券", defaultKind: "fixed", add: "添加消费券" }
+    };
+
+    const state = {
+      products: [],
+      coupons: {}
+    };
+
+    let uid = 1;
+    let splitSearchRevision = 0;
+    let splitSearchTimer = 0;
+
+    function initializeBlankState() {
+      uid = 1;
+      state.products = [];
+      state.coupons = Object.fromEntries(UI_ORDER.map(layer => [layer.key, []]));
+    }
+
+    function renderEmptyResult() {
+      markResultStale();
+      document.getElementById("finalPrice").textContent = "未计算";
+      document.getElementById("savedAmount").textContent = "未计算";
+      document.getElementById("expressionText").textContent = "";
+      document.getElementById("waterfall").innerHTML = "";
+      document.getElementById("resultStatus").textContent = "尚未计算。";
+      document.getElementById("splitAdvice").innerHTML = "<li>暂无付款方案。</li>";
+      document.getElementById("addOnAdvice").innerHTML = "<li>暂无凑单方案。</li>";
+    }
+
+    function defaults() {
+      uid = 1;
+      const sampleProduct = { id: uid++, name: "示例商品", price: 500, qty: 1, vipEligible: true, presale: false, depositPaid: 0, tradeInEligible: false, tradeInRate: 0, locked: true };
+      state.products = [
+        sampleProduct
+      ];
+      state.coupons = {
+        coupon: [{ id: uid++, productId: sampleProduct.id, kind: "fixed", threshold: 300, value: 10, cap: 0, thresholdRed: false }],
+        official: [{ id: uid++, productId: sampleProduct.id, kind: "fixed", threshold: 0, value: 50, cap: 0, thresholdRed: false }],
+        streamer: [{ id: uid++, streamerName: "主播A", productIds: [sampleProduct.id], kind: "percent", threshold: 0, value: 0.9, cap: 20, thresholdRed: false }],
+        coins: [{ id: uid++, productIds: [sampleProduct.id], kind: "fixed", threshold: 5.01, value: 5, cap: 0, thresholdRed: false }],
+        category: [{ id: uid++, customName: "品类加补券", productIds: [sampleProduct.id], kind: "fixed", threshold: 300, value: 30, cap: 0, thresholdRed: false }],
+        streamerRed: [{ id: uid++, streamerGroupId: uid++, streamerName: "主播A", productIds: [sampleProduct.id], kind: "fixed", threshold: 0, value: 40, cap: 0, thresholdRed: false }],
+        consumer: []
+      };
+    }
+
+    function money(n) {
+      const safe = Math.max(0, Number.isFinite(n) ? n : 0);
+      return `¥${safe.toFixed(2).replace(/\.00$/, "")}`;
+    }
+
+    function numberValue(value, fallback = 0) {
+      const n = Number(value);
+      return Number.isFinite(n) ? n : fallback;
+    }
+
+    function clampDiscount(amount, discount) {
+      return Math.min(Math.max(0, discount), Math.max(0, amount));
+    }
+
+    function discountRate(value) {
+      const rate = numberValue(value, 1);
+      if (rate <= 1) return Math.max(0, rate);
+      if (rate <= 10) return Math.max(0, rate / 10);
+      return Math.max(0, rate / 100);
+    }
+
+    function subsidyRate(value) {
+      const rate = numberValue(value);
+      if (rate <= 0) return 0;
+      if (rate <= 1) return Math.min(1, rate);
+      return Math.min(1, rate / 100);
+    }
+
+    function percentLabel(value) {
+      const rate = discountRate(value);
+      return `${Number((rate * 10).toFixed(2))} 折`;
+    }
+
+    function productName(productId) {
+      const product = state.products.find(p => String(p.id) === String(productId) || String(p.sourceProductId) === String(productId));
+      return product?.name || "未选择商品";
+    }
+
+    function productNames(productIds) {
+      const ids = normalizeProductIds(productIds);
+      if (!ids.length) return "未选择商品";
+      return ids.map(id => productName(id)).join("、");
+    }
+
+    function couponLabel(group, coupon, includeScope = true) {
+      const meta = COUPON_META[group];
+      if (group === "coins") return "淘金币";
+      const title = ["category", "consumer"].includes(group) && coupon.customName ? coupon.customName : meta?.title || "优惠";
+      const threshold = numberValue(coupon.threshold);
+      const value = numberValue(coupon.value);
+      const cap = numberValue(coupon.cap);
+      const prefix = threshold > 0 ? `满 ${money(threshold)} ` : "";
+      const capText = cap > 0 ? `，最高减 ${money(cap)}` : "";
+      const redText = group === "consumer" && coupon.thresholdRed ? "，门槛红包" : "";
+      const inflateText = coupon.inflatedUsed ? "（膨胀）" : "";
+      const anchorText = ["streamer", "streamerRed"].includes(group) && coupon.streamerName ? `${coupon.streamerName} ` : "";
+      const scopeText = !includeScope ? "" : isSingleProductLayer(group) ? `${productName(coupon.productId)}：` : `${productNames(coupon.productIds)}：`;
+      if (coupon.kind === "percent") return `${title}${inflateText} ${anchorText}${scopeText}${prefix}${percentLabel(value)}${capText}${redText}`;
+      return `${title}${inflateText} ${anchorText}${scopeText}${prefix}${threshold > 0 ? "减" : "直减"} ${money(value)}${redText}`;
+    }
+
+    function couponDiscount(coupon, amount) {
+      if (!coupon || amount + 1e-9 < numberValue(coupon.threshold)) return 0;
+      if (coupon.kind === "percent") {
+        const rate = discountRate(coupon.value);
+        const raw = amount * Math.max(0, 1 - rate);
+        const cap = numberValue(coupon.cap);
+        return clampDiscount(amount, cap > 0 ? Math.min(raw, cap) : raw);
+      }
+      return clampDiscount(amount, numberValue(coupon.value));
+    }
+
+    function normalizeInflateOptions(coupon) {
+      const options = Array.isArray(coupon.inflateOptions) ? coupon.inflateOptions : [];
+      const normalized = options.map((option, index) => ({
+        id: option.id || index + 1,
+        threshold: numberValue(option.threshold),
+        value: numberValue(option.value)
+      })).filter(option => option.threshold > 0 || option.value > 0);
+      if (normalized.length) return normalized;
+      if (numberValue(coupon.inflatedThreshold) > 0 || numberValue(coupon.inflatedValue) > 0) {
+        return [{
+          id: uid++,
+          threshold: numberValue(coupon.inflatedThreshold),
+          value: numberValue(coupon.inflatedValue)
+        }];
+      }
+      return [];
+    }
+
+    function bestConsumerVersion(coupon, amount) {
+      const base = { ...coupon, inflatedUsed: false };
+      const candidates = [{ coupon: base, discount: couponDiscount(base, amount) }];
+      if (coupon.canInflate) {
+        normalizeInflateOptions(coupon).forEach((option, index) => {
+          const inflated = {
+            ...coupon,
+            threshold: option.threshold,
+            value: option.value,
+            originalThreshold: numberValue(coupon.threshold),
+            originalValue: numberValue(coupon.value),
+            inflatedUsed: true,
+            inflatedOptionIndex: index + 1
+          };
+          candidates.push({ coupon: inflated, discount: couponDiscount(inflated, amount) });
+        });
+      }
+      return candidates.sort((a, b) => b.discount - a.discount)[0];
+    }
+
+    function applyBestSingle(amount, list) {
+      let best = { amount, discount: 0, coupon: null };
+      for (const coupon of list || []) {
+        const discount = couponDiscount(coupon, amount);
+        if (discount > best.discount + 1e-9) {
+          best = { amount: amount - discount, discount, coupon };
+        }
+      }
+      return best;
+    }
+
+    function productGross(product) {
+      return numberValue(product.price) * Math.max(0, numberValue(product.qty, 1));
+    }
+
+    function productDeposit(product) {
+      return product.presale ? Math.max(0, numberValue(product.depositPaid)) : 0;
+    }
+
+    function productKey(product) {
+      return String(product.sourceProductId || product.id);
+    }
+
+    function normalizeProductIds(value) {
+      const raw = Array.isArray(value) ? value : String(value || "").split(",");
+      return [...new Set(raw.map(id => String(id).trim()).filter(Boolean))];
+    }
+
+    function isCouponForProduct(coupon, product) {
+      return String(coupon.productId) === String(product.id) || String(coupon.productId) === String(product.sourceProductId);
+    }
+
+    function createBalances(products) {
+      const balances = new Map();
+      for (const product of products) {
+        const key = productKey(product);
+        const current = balances.get(key) || { product, amount: 0, vipEligible: product.vipEligible !== false };
+        current.amount += productGross(product);
+        current.vipEligible = current.vipEligible || product.vipEligible !== false;
+        current.depositPaid = (current.depositPaid || 0) + productDeposit(product);
+        current.tradeInEligible = current.tradeInEligible || Boolean(product.tradeInEligible);
+        current.tradeInRate = Math.max(numberValue(current.tradeInRate), subsidyRate(product.tradeInRate));
+        balances.set(key, current);
+      }
+      return balances;
+    }
+
+    function balanceTotal(balances) {
+      return [...balances.values()].reduce((sum, item) => sum + item.amount, 0);
+    }
+
+    function eligibleBalances(balances, coupon, group) {
+      if (isSingleProductLayer(group)) {
+        return [...balances.values()].filter(item => isCouponForProduct(coupon, item.product));
+      }
+      const ids = normalizeProductIds(coupon.productIds);
+      if (!ids.length) return [];
+      return [...balances.values()].filter(item => ids.includes(productKey(item.product)) || ids.includes(String(item.product.id)));
+    }
+
+    function applyDiscountToBalances(entries, discount) {
+      const amount = entries.reduce((sum, item) => sum + item.amount, 0);
+      const usable = clampDiscount(amount, discount);
+      if (!usable || amount <= 0) return 0;
+      let remaining = usable;
+      entries.forEach((item, index) => {
+        const share = index === entries.length - 1 ? remaining : Math.min(item.amount, usable * (item.amount / amount));
+        item.amount = Math.max(0, item.amount - share);
+        remaining -= share;
+      });
+      return usable;
+    }
+
+    function applyBestProductCoupons(balances, list, group) {
+      let discount = 0;
+      const coupons = [];
+      for (const item of balances.values()) {
+        const candidates = (list || []).filter(coupon => isCouponForProduct(coupon, item.product));
+        const result = applyBestSingle(item.amount, candidates);
+        if (!result.coupon) continue;
+        discount += applyDiscountToBalances([item], result.discount);
+        coupons.push(result.coupon);
+      }
+      return { discount, coupons };
+    }
+
+    function applyBestScopedCoupons(balances, list, group) {
+      let discount = 0;
+      const coupons = [];
+      const usedProducts = new Set();
+      const ranked = (list || []).map((coupon) => {
+        const entries = eligibleBalances(balances, coupon, group).filter(item => !usedProducts.has(productKey(item.product)));
+        const amount = entries.reduce((sum, item) => sum + item.amount, 0);
+        return { coupon, entries, discount: couponDiscount(coupon, amount) };
+      }).filter(item => item.discount > 0).sort((a, b) => b.discount - a.discount);
+
+      for (const item of ranked) {
+        const entries = item.entries.filter(entry => !usedProducts.has(productKey(entry.product)));
+        const amount = entries.reduce((sum, entry) => sum + entry.amount, 0);
+        const currentDiscount = couponDiscount(item.coupon, amount);
+        if (!currentDiscount) continue;
+        const applied = applyDiscountToBalances(entries, currentDiscount);
+        if (!applied) continue;
+        discount += applied;
+        coupons.push(item.coupon);
+        entries.forEach(entry => usedProducts.add(productKey(entry.product)));
+      }
+      return { discount, coupons };
+    }
+
+    function applyBestRed(balances, list, settings) {
+      const eligible = (list || []).map((coupon) => {
+        const entries = eligibleBalances(balances, coupon, coupon.redGroup || coupon.group || "streamerRed");
+        const amount = entries.reduce((sum, item) => sum + item.amount, 0);
+        const best = (coupon.redGroup || coupon.group) === "consumer" ? bestConsumerVersion(coupon, amount) : { coupon, discount: couponDiscount(coupon, amount) };
+        return { coupon: best.coupon, entries, discount: best.discount };
+      }).filter(item => item.discount > 0);
+      const limit = Math.max(1, Math.min(10, settings.redLimit));
+      const thresholdLimit = Math.max(0, Math.min(10, settings.thresholdRedLimit));
+      const isConsumer = item => (item.coupon.redGroup || item.coupon.group) === "consumer";
+      const consumers = eligible.filter(isConsumer);
+      const thresholdItems = eligible.filter(item => !isConsumer(item) && item.coupon.thresholdRed).sort((a, b) => b.discount - a.discount);
+      const normalItems = eligible.filter(item => !isConsumer(item) && !item.coupon.thresholdRed).sort((a, b) => b.discount - a.discount);
+      let best = { discount: 0, entries: [] };
+      // Consumer coupons have their own one-per-order rule, regardless of imported flags.
+      for (const consumer of [null, ...(thresholdLimit > 0 ? consumers : [])]) {
+        const consumerCount = consumer ? 1 : 0;
+        const maxThreshold = Math.min(thresholdLimit - consumerCount, thresholdItems.length, limit - consumerCount);
+        for (let thresholdCount = 0; thresholdCount <= maxThreshold; thresholdCount += 1) {
+          const chosen = [
+            ...(consumer ? [consumer] : []),
+            ...thresholdItems.slice(0, thresholdCount),
+            ...normalItems.slice(0, limit - consumerCount - thresholdCount)
+          ];
+          const simulated = new Map([...balances].map(([key, item]) => [key, { ...item }]));
+          let discount = 0;
+          for (const item of chosen) {
+            discount += applyDiscountToBalances(item.entries.map(entry => simulated.get(productKey(entry.product))), item.discount);
+          }
+          if (discount > best.discount + 1e-9) best = { discount, entries: chosen };
+        }
+      }
+      const total = balanceTotal(balances);
+      let applied = 0;
+      const picked = [];
+      for (const item of best.entries) {
+        const actual = applyDiscountToBalances(item.entries, item.discount);
+        applied += actual;
+        if (actual > 0) picked.push({ ...item.coupon, appliedDiscount: actual });
+      }
+      applied = Math.min(applied, total);
+      return { discount: applied, coupons: picked };
+    }
+
+    function applyTradeInSubsidy(balances) {
+      let discount = 0;
+      const coupons = [];
+      for (const item of balances.values()) {
+        if (!item.tradeInEligible) continue;
+        const rate = subsidyRate(item.tradeInRate);
+        if (!rate || item.amount <= 0) continue;
+        const base = item.amount;
+        const applied = applyDiscountToBalances([item], base * rate);
+        if (!applied) continue;
+        discount += applied;
+        coupons.push({
+          id: `tradeIn-${productKey(item.product)}`,
+          productId: productKey(item.product),
+          label: `${item.product.name || "未命名商品"}：政府补贴 ${Number((rate * 100).toFixed(2))}%（基数 ${money(base)}）`,
+          discount: applied
+        });
+      }
+      return { discount, coupons };
+    }
+
+    function applyPaidDeposit(balances) {
+      let discount = 0;
+      const coupons = [];
+      for (const item of balances.values()) {
+        const deposit = Math.max(0, numberValue(item.depositPaid));
+        if (!deposit || item.amount <= 0) continue;
+        const applied = applyDiscountToBalances([item], deposit);
+        if (!applied) continue;
+        discount += applied;
+        coupons.push({
+          id: `deposit-${productKey(item.product)}`,
+          productId: productKey(item.product),
+          label: `${item.product.name || "未命名商品"}：已付定金 ${money(applied)}`,
+          discount: applied
+        });
+      }
+      return { discount, coupons };
+    }
+
+    function calculateOrder(products, coupons, settings = readSettings(), stopBefore = null) {
+      const subtotal = products.reduce((sum, p) => sum + numberValue(p.price) * Math.max(0, numberValue(p.qty, 1)), 0);
+      const balances = createBalances(products);
+      const steps = [];
+      const usedIds = new Set();
+
+      for (const layer of ORDER) {
+        if (layer.key === stopBefore) break;
+        if (["coupon", "official"].includes(layer.key)) {
+          const before = balanceTotal(balances);
+          const result = applyBestProductCoupons(balances, coupons[layer.key] || [], layer.key);
+          const after = balanceTotal(balances);
+          result.coupons.forEach(c => usedIds.add(c.id));
+          steps.push({
+            key: layer.key,
+            label: layer.label,
+            before,
+            after,
+            discount: result.discount,
+            pickedCouponObjects: result.coupons,
+            pickedCoupons: result.coupons.map(c => couponLabel(layer.key, c)),
+            picked: result.coupons.map(c => couponLabel(layer.key, c)).join("、") || "未使用"
+          });
+        } else if (layer.key === "red") {
+          const before = balanceTotal(balances);
+          const redList = [
+            ...(coupons.streamerRed || []).map(c => ({ ...c, redGroup: "streamerRed" })),
+            ...(coupons.consumer || []).map(c => ({ ...c, redGroup: "consumer" }))
+          ];
+          const result = applyBestRed(balances, redList, settings);
+          const after = balanceTotal(balances);
+          result.coupons.forEach(c => usedIds.add(c.id));
+          steps.push({
+            key: layer.key,
+            label: layer.label,
+            before,
+            after,
+            discount: result.discount,
+            pickedCouponObjects: result.coupons,
+            pickedCoupons: result.coupons.map(c => couponLabel(c.redGroup || "streamerRed", c)),
+            picked: result.coupons.map(c => couponLabel(c.redGroup || "streamerRed", c)).join("、") || "未使用"
+          });
+        } else if (layer.key === "vip88" && !settings.is88Vip) {
+          const amount = balanceTotal(balances);
+          steps.push({
+            key: layer.key,
+            label: layer.label,
+            before: amount,
+            after: amount,
+            discount: 0,
+            picked: "非 88VIP 用户，不参与"
+          });
+        } else if (layer.key === "vip88") {
+          const before = balanceTotal(balances);
+          const entries = [...balances.values()].filter(item => item.vipEligible);
+          const eligibleBefore = entries.reduce((sum, item) => sum + item.amount, 0);
+          const discount = applyDiscountToBalances(entries, eligibleBefore * 0.05);
+          const after = balanceTotal(balances);
+          steps.push({
+            key: layer.key,
+            label: layer.label,
+            before,
+            after,
+            eligibleBefore,
+            fullVipBase: Math.abs(eligibleBefore - before) < 0.005,
+            discount,
+            picked: discount ? `88VIP 95 折，作用于可用 88VIP 商品 ${money(eligibleBefore)}` : "本单商品不支持 88VIP 折扣"
+          });
+        } else if (layer.key === "tradeIn") {
+          const before = balanceTotal(balances);
+          const result = applyTradeInSubsidy(balances);
+          const after = balanceTotal(balances);
+          steps.push({
+            key: layer.key,
+            label: layer.label,
+            before,
+            after,
+            discount: result.discount,
+            pickedCouponObjects: result.coupons,
+            pickedCoupons: result.coupons.map(c => c.label),
+            picked: result.coupons.map(c => c.label).join("、") || "未使用"
+          });
+        } else if (layer.key === "deposit") {
+          const before = balanceTotal(balances);
+          const result = applyPaidDeposit(balances);
+          const after = balanceTotal(balances);
+          steps.push({
+            key: layer.key,
+            label: layer.label,
+            before,
+            after,
+            discount: result.discount,
+            pickedCouponObjects: result.coupons,
+            pickedCoupons: result.coupons.map(c => c.label),
+            picked: result.coupons.map(c => c.label).join("、") || "未使用"
+          });
+        } else {
+          const before = balanceTotal(balances);
+          const result = applyBestScopedCoupons(balances, coupons[layer.key] || [], layer.key);
+          const after = balanceTotal(balances);
+          result.coupons.forEach(c => usedIds.add(c.id));
+          steps.push({
+            key: layer.key,
+            label: layer.label,
+            before,
+            after,
+            discount: result.discount,
+            pickedCouponObjects: result.coupons,
+            pickedCoupons: result.coupons.map(c => couponLabel(layer.key, c)),
+            picked: result.coupons.map(c => couponLabel(layer.key, c)).join("、") || "未使用"
+          });
+        }
+      }
+
+      const final = balanceTotal(balances);
+      return {
+        subtotal,
+        final: Math.max(0, final),
+        saved: subtotal - Math.max(0, final),
+        finalItems: [...balances.values()].map(item => ({
+          id: item.product.id,
+          sourceProductId: item.product.sourceProductId || item.product.id,
+          name: item.product.name,
+          locked: item.product.locked,
+          amount: Math.max(0, item.amount)
+        })),
+        steps,
+        usedIds
+      };
+    }
+
+    function formatCouponExpression(step) {
+      if (!step.discount) return null;
+      if (step.key === "vip88" && step.fullVipBase) {
+        return `×${(step.after / step.before * 100).toFixed(0)}%`;
+      }
+      return `-${money(step.discount).replace("¥", "")}`;
+    }
+
+    function expressionFor(result) {
+      const parts = [money(result.subtotal).replace("¥", "")];
+      for (const step of result.steps) {
+        const expr = formatCouponExpression(step);
+        if (expr) parts.push(expr);
+      }
+      return parts.join(" ");
+    }
+
+    function readSettings() {
+      return {
+        is88Vip: Boolean(document.getElementById("is88Vip")?.checked),
+        maxAddAmount: Math.max(1, numberValue(document.getElementById("maxAddAmount")?.value, 500)),
+        addStep: Math.max(1, numberValue(document.getElementById("addStep")?.value, 1)),
+        redLimit: Math.max(1, Math.min(10, numberValue(document.getElementById("redLimit")?.value, 10))),
+        thresholdRedLimit: Math.max(0, Math.min(10, numberValue(document.getElementById("thresholdRedLimit")?.value, 1)))
+      };
+    }
+
+    function applySettings(settings = {}) {
+      const values = {
+        is88Vip: settings.is88Vip !== false,
+        maxAddAmount: numberValue(settings.maxAddAmount, 500),
+        addStep: numberValue(settings.addStep, 1),
+        redLimit: numberValue(settings.redLimit, 10),
+        thresholdRedLimit: numberValue(settings.thresholdRedLimit, 1)
+      };
+      const vip = document.getElementById("is88Vip");
+      if (vip) vip.checked = values.is88Vip;
+      ["maxAddAmount", "addStep", "redLimit", "thresholdRedLimit"].forEach((key) => {
+        const input = document.getElementById(key);
+        if (input) input.value = values[key];
+      });
+    }
+
+    function readForm() {
+      state.products = [...document.querySelectorAll("[data-product-id]")].map(row => ({
+        id: numberValue(row.dataset.productId),
+        name: row.querySelector("[data-field='name']").value.trim() || "未命名商品",
+        price: numberValue(row.querySelector("[data-field='price']").value),
+        qty: Math.max(0, numberValue(row.querySelector("[data-field='qty']").value, 1)),
+        vipEligible: row.querySelector("[data-field='vipEligible']").checked,
+        presale: Boolean(row.querySelector("[data-field='presale']")?.checked),
+        depositPaid: numberValue(row.querySelector("[data-field='depositPaid']")?.value),
+        tradeInEligible: Boolean(row.querySelector("[data-field='tradeInEligible']")?.checked),
+        tradeInRate: numberValue(row.querySelector("[data-field='tradeInRate']")?.value),
+        locked: row.querySelector("[data-field='locked']").checked
+      }));
+
+      for (const layer of UI_ORDER) {
+        if (layer.key === "streamerRed") continue;
+        state.coupons[layer.key] = [...document.querySelectorAll(`[data-coupon-group='${layer.key}']`)].map((row) => {
+          const kind = row.querySelector("[data-field='kind']").value;
+          return {
+            id: numberValue(row.dataset.couponId),
+            customName: row.querySelector("[data-field='customName']")?.value.trim() || "",
+            streamerName: row.querySelector("[data-field='streamerName']")?.value.trim() || "",
+            productId: row.querySelector("[data-field='productId']")?.value || "",
+            productIds: [...row.querySelectorAll("[data-field='productIds']:checked")].map(input => input.value),
+            kind,
+            threshold: kind === "fixed" ? numberValue(row.querySelector("[data-field='threshold']")?.value) : 0,
+            value: kind === "percent" ? numberValue(row.querySelector("[data-field='percentValue']")?.value) : numberValue(row.querySelector("[data-field='fixedValue']")?.value),
+            cap: kind === "percent" ? numberValue(row.querySelector("[data-field='cap']")?.value) : 0,
+            canInflate: Boolean(row.querySelector("[data-field='canInflate']")?.checked),
+            inflateOptions: [...row.querySelectorAll("[data-inflate-option]")].map((option) => ({
+              id: option.dataset.inflateOption || "",
+              threshold: numberValue(option.querySelector("[data-field='inflateThreshold']")?.value),
+              value: numberValue(option.querySelector("[data-field='inflateValue']")?.value)
+            })),
+            inflatedThreshold: numberValue(row.querySelector("[data-inflate-option] [data-field='inflateThreshold']")?.value),
+            inflatedValue: numberValue(row.querySelector("[data-inflate-option] [data-field='inflateValue']")?.value),
+            thresholdRed: layer.key === "consumer"
+          };
+        });
+      }
+
+      state.coupons.streamerRed = [...document.querySelectorAll("[data-streamer-red-group]")].flatMap((group) => {
+        const streamerGroupId = group.dataset.streamerRedGroup ? numberValue(group.dataset.streamerRedGroup) : uid++;
+        const streamerName = group.querySelector("[data-field='streamerName']")?.value.trim() || "未命名主播";
+        const productIds = [...group.querySelectorAll("[data-field='productIds']:checked")].map(input => input.value);
+        return [...group.querySelectorAll("[data-streamer-red-coupon]")].map((row) => {
+          return {
+            id: numberValue(row.dataset.streamerRedCoupon),
+            streamerGroupId,
+            streamerName,
+            productIds,
+            kind: "fixed",
+            threshold: 0,
+            value: numberValue(row.querySelector("[data-field='fixedValue']")?.value),
+            cap: 0,
+            thresholdRed: false
+          };
+        });
+      });
+    }
+
+    function normalizeImportedData(data) {
+      const products = (data.products || []).map((product) => ({
+        id: numberValue(product.id, uid++),
+        name: String(product.name || "未命名商品"),
+        price: numberValue(product.price),
+        qty: Math.max(0, numberValue(product.qty, 1)),
+        vipEligible: product.vipEligible !== false,
+        presale: Boolean(product.presale),
+        depositPaid: numberValue(product.depositPaid),
+        tradeInEligible: Boolean(product.tradeInEligible),
+        tradeInRate: numberValue(product.tradeInRate),
+        locked: product.locked !== false
+      }));
+      const fallbackProductId = products[0]?.id || "";
+      const coupons = {};
+      for (const layer of UI_ORDER) {
+        const importedList = data.coupons?.[layer.key] || (layer.key === "streamerRed" ? data.coupons?.red || [] : []);
+        coupons[layer.key] = importedList.map((coupon) => ({
+          id: numberValue(coupon.id, uid++),
+          streamerGroupId: coupon.streamerGroupId ? numberValue(coupon.streamerGroupId) : "",
+          customName: String(coupon.customName || ""),
+          streamerName: String(coupon.streamerName || ""),
+          productId: isSingleProductLayer(layer.key) ? coupon.productId || fallbackProductId : "",
+          productIds: isMultiProductLayer(layer.key) ? normalizeProductIds(coupon.productIds || coupon.productId || fallbackProductId) : [],
+          kind: layer.key === "streamerRed" ? "fixed" : coupon.kind === "percent" ? "percent" : "fixed",
+          threshold: layer.key === "streamerRed" ? 0 : numberValue(coupon.threshold),
+          value: numberValue(coupon.value, coupon.kind === "percent" ? 0.95 : 0),
+          cap: layer.key === "streamerRed" ? 0 : numberValue(coupon.cap),
+          canInflate: Boolean(coupon.canInflate),
+          inflateOptions: normalizeInflateOptions(coupon),
+          inflatedThreshold: normalizeInflateOptions(coupon)[0]?.threshold || 0,
+          inflatedValue: normalizeInflateOptions(coupon)[0]?.value || 0,
+          thresholdRed: layer.key === "consumer" || (layer.key !== "streamerRed" && Boolean(coupon.thresholdRed))
+        }));
+      }
+      return { products: products.length ? products : [{ id: uid++, name: "新商品", price: 0, qty: 1, vipEligible: true, presale: false, depositPaid: 0, tradeInEligible: false, tradeInRate: 0, locked: true }], coupons, settings: data.settings || {} };
+    }
+
+    function applyData(data) {
+      const normalized = normalizeImportedData(data);
+      state.products = normalized.products;
+      state.coupons = normalized.coupons;
+      uid = Math.max(
+        uid,
+        ...state.products.map(p => numberValue(p.id)),
+        ...Object.values(state.coupons).flat().map(c => numberValue(c.id))
+      ) + 1;
+      applySettings(normalized.settings);
+      renderAll();
+    }
+
+    function currentData() {
+      readForm();
+      return {
+        version: 6,
+        products: state.products,
+        coupons: state.coupons,
+        settings: readSettings()
+      };
+    }
+
+    function xmlEscape(value) {
+      return String(value ?? "")
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;");
+    }
+
+    function excelCell(value) {
+      const isNumber = typeof value === "number" && Number.isFinite(value);
+      const type = isNumber ? "Number" : "String";
+      return `<Cell><Data ss:Type="${type}">${xmlEscape(isNumber ? value : value ?? "")}</Data></Cell>`;
+    }
+
+    function excelSheet(name, headers, rows) {
+      const headerRow = `<Row>${headers.map(excelCell).join("")}</Row>`;
+      const bodyRows = rows.map(row => `<Row>${row.map(excelCell).join("")}</Row>`).join("");
+      return `<Worksheet ss:Name="${xmlEscape(name)}"><Table>${headerRow}${bodyRows}</Table></Worksheet>`;
+    }
+
+    function dataToExcelXml(data) {
+      const productRows = data.products.map(product => [
+        product.id,
+        product.name,
+        product.price,
+        product.qty,
+        product.vipEligible ? "是" : "否",
+        product.presale ? "是" : "否",
+        product.depositPaid || 0,
+        product.tradeInEligible ? "是" : "否",
+        product.tradeInRate || 0,
+        product.locked ? "是" : "否"
+      ]);
+      const couponRows = UI_ORDER.flatMap(layer => (data.coupons[layer.key] || []).map(coupon => [
+        layer.key,
+        layer.label,
+        coupon.id,
+        coupon.streamerGroupId || "",
+        coupon.customName || "",
+        coupon.streamerName || "",
+        isSingleProductLayer(layer.key) ? coupon.productId || "" : normalizeProductIds(coupon.productIds).join(","),
+        isSingleProductLayer(layer.key) ? productName(coupon.productId) : productNames(coupon.productIds),
+        layer.key === "streamerRed" ? "fixed" : coupon.kind,
+        layer.key === "streamerRed" ? 0 : coupon.threshold,
+        coupon.value,
+        layer.key === "streamerRed" ? 0 : coupon.cap,
+        coupon.canInflate ? "是" : "否",
+        coupon.inflatedThreshold || "",
+        coupon.inflatedValue || "",
+        inflateOptionsText(coupon),
+        layer.key === "streamerRed" ? "否" : coupon.thresholdRed ? "是" : "否"
+      ]));
+      const settingRows = Object.entries(data.settings).map(([key, value]) => [key, value]);
+      return `<?xml version="1.0" encoding="UTF-8"?>
+<?mso-application progid="Excel.Sheet"?>
+<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet"
+ xmlns:o="urn:schemas-microsoft-com:office:office"
+ xmlns:x="urn:schemas-microsoft-com:office:excel"
+ xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet">
+${excelSheet("商品", ["id", "商品名", "单价", "数量", "可用88VIP", "预售商品", "已付定金", "享受政府补贴", "政府补贴折扣", "必须买"], productRows)}
+${excelSheet("优惠", ["优惠类型", "优惠类型名称", "id", "主播红包分组id", "券名称", "主播/来源", "适用商品ID", "适用商品名称", "类型", "门槛", "金额/折扣", "封顶", "可膨胀", "膨胀后门槛", "膨胀后面额", "膨胀方案", "门槛红包"], couponRows)}
+${excelSheet("设置", ["设置项", "值"], settingRows)}
+</Workbook>`;
+    }
+
+    function downloadCurrentData() {
+      const data = currentData();
+      const xml = dataToExcelXml(data);
+      const blob = new Blob(["\ufeff", xml], { type: "application/vnd.ms-excel;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      const date = new Date().toISOString().slice(0, 10).replaceAll("-", "");
+      a.href = url;
+      a.download = `大促优惠计算配置-${date}.xls`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+      showToast("已下载当前商品和优惠配置。");
+    }
+
+    function worksheetRows(doc, sheetName) {
+      const sheets = [...doc.getElementsByTagNameNS("*", "Worksheet")];
+      const sheet = sheets.find(node => node.getAttribute("ss:Name") === sheetName || node.getAttribute("Name") === sheetName);
+      if (!sheet) return [];
+      return [...sheet.getElementsByTagNameNS("*", "Row")].map(row =>
+        [...row.getElementsByTagNameNS("*", "Cell")].map(cell => cell.textContent.trim())
+      );
+    }
+
+    function rowsToObjects(rows) {
+      if (rows.length < 2) return [];
+      const headers = rows[0];
+      return rows.slice(1).map(row => Object.fromEntries(headers.map((header, index) => [header, row[index] ?? ""])));
+    }
+
+    function yesNo(value) {
+      return ["是", "true", "1", "yes", "y"].includes(String(value).trim().toLowerCase());
+    }
+
+    function inflateOptionsText(coupon) {
+      return normalizeInflateOptions(coupon).map(option => `${option.threshold}:${option.value}`).join(";");
+    }
+
+    function parseInflateOptionsText(value) {
+      return String(value || "").split(/[;；]/).map((item, index) => {
+        const [threshold, amount] = item.split(/[:：,，/]/);
+        return {
+          id: index + 1,
+          threshold: numberValue(threshold),
+          value: numberValue(amount)
+        };
+      }).filter(option => option.threshold > 0 || option.value > 0);
+    }
+
+    function dataFromExcelXml(xml) {
+      const doc = new DOMParser().parseFromString(xml.replace(/^\ufeff/, ""), "application/xml");
+      if (doc.getElementsByTagName("parsererror").length) throw new Error("文件格式无法识别");
+      const products = rowsToObjects(worksheetRows(doc, "商品")).map(row => ({
+        id: numberValue(row.id),
+        name: row["商品名"],
+        price: numberValue(row["单价"]),
+        qty: numberValue(row["数量"], 1),
+        vipEligible: yesNo(row["可用88VIP"]),
+        presale: yesNo(row["预售商品"]),
+        depositPaid: numberValue(row["已付定金"]),
+        tradeInEligible: yesNo(row["享受政府补贴"]),
+        tradeInRate: numberValue(row["政府补贴折扣"]),
+        locked: yesNo(row["必须买"])
+      }));
+      const coupons = {};
+      for (const layer of UI_ORDER) coupons[layer.key] = [];
+      rowsToObjects(worksheetRows(doc, "优惠")).forEach((row) => {
+        const key = row["优惠类型"];
+        const normalizedKey = key === "red" ? "streamerRed" : key;
+        if (!coupons[normalizedKey]) return;
+        coupons[normalizedKey].push({
+          id: numberValue(row.id),
+          streamerGroupId: row["主播红包分组id"] ? numberValue(row["主播红包分组id"]) : "",
+          customName: row["券名称"] || "",
+          streamerName: row["主播/来源"] || "",
+          productId: row["适用商品ID"],
+          productIds: normalizeProductIds(row["适用商品ID"]),
+          kind: normalizedKey === "streamerRed" ? "fixed" : row["类型"] === "percent" ? "percent" : "fixed",
+          threshold: normalizedKey === "streamerRed" ? 0 : numberValue(row["门槛"]),
+          value: numberValue(row["金额/折扣"]),
+          cap: normalizedKey === "streamerRed" ? 0 : numberValue(row["封顶"]),
+          canInflate: yesNo(row["可膨胀"]),
+          inflatedThreshold: numberValue(row["膨胀后门槛"]),
+          inflatedValue: numberValue(row["膨胀后面额"]),
+          inflateOptions: parseInflateOptionsText(row["膨胀方案"]),
+          thresholdRed: normalizedKey === "consumer" || (normalizedKey !== "streamerRed" && yesNo(row["门槛红包"]))
+        });
+      });
+      const settings = {};
+      rowsToObjects(worksheetRows(doc, "设置")).forEach((row) => {
+        const key = row["设置项"];
+        if (!key) return;
+        settings[key] = key === "is88Vip" ? yesNo(row["值"]) : numberValue(row["值"]);
+      });
+      return { products, coupons, settings };
+    }
+
+    function uploadDataFile(file) {
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = () => {
+        try {
+          const data = dataFromExcelXml(String(reader.result || ""));
+          applyData(data);
+          showToast("已导入商品和优惠配置。");
+        } catch (error) {
+          showToast(`导入失败：${error.message || "请使用本工具下载的 .xls 配置文件"}`);
+        }
+      };
+      reader.readAsText(file, "utf-8");
+    }
+
+    function refreshCouponPreviews() {
+      for (const layer of UI_ORDER) {
+        document.querySelectorAll(`[data-coupon-group='${layer.key}']`).forEach((row) => {
+          const kind = row.querySelector("[data-field='kind']").value;
+          row.dataset.kind = kind;
+          const coupon = {
+            customName: row.querySelector("[data-field='customName']")?.value.trim() || "",
+            streamerName: row.querySelector("[data-field='streamerName']")?.value.trim() || "",
+            productId: row.querySelector("[data-field='productId']")?.value || "",
+            productIds: [...row.querySelectorAll("[data-field='productIds']:checked")].map(input => input.value),
+            kind,
+            threshold: kind === "fixed" ? numberValue(row.querySelector("[data-field='threshold']")?.value) : 0,
+            value: kind === "percent" ? numberValue(row.querySelector("[data-field='percentValue']")?.value) : numberValue(row.querySelector("[data-field='fixedValue']")?.value),
+            cap: kind === "percent" ? numberValue(row.querySelector("[data-field='cap']")?.value) : 0,
+            canInflate: Boolean(row.querySelector("[data-field='canInflate']")?.checked),
+            inflateOptions: [...row.querySelectorAll("[data-inflate-option]")].map((option) => ({
+              id: option.dataset.inflateOption || "",
+              threshold: numberValue(option.querySelector("[data-field='inflateThreshold']")?.value),
+              value: numberValue(option.querySelector("[data-field='inflateValue']")?.value)
+            })),
+            inflatedThreshold: numberValue(row.querySelector("[data-inflate-option] [data-field='inflateThreshold']")?.value),
+            inflatedValue: numberValue(row.querySelector("[data-inflate-option] [data-field='inflateValue']")?.value),
+            thresholdRed: layer.key === "consumer"
+          };
+          row.dataset.inflate = coupon.canInflate ? "true" : "false";
+          const preview = row.querySelector(".coupon-preview");
+          if (preview) preview.textContent = couponLabel(layer.key, coupon);
+        });
+      }
+    }
+
+    function productOptionsHtml(selectedId) {
+      const fallbackId = state.products[0]?.id || "";
+      const selected = state.products.some(product => String(product.id) === String(selectedId)) ? selectedId : fallbackId;
+      return state.products.map(product => {
+        const isSelected = String(selected) === String(product.id) ? "selected" : "";
+        return `<option value="${product.id}" ${isSelected}>${escapeHtml(product.name || "未命名商品")}</option>`;
+      }).join("");
+    }
+
+    function isSingleProductLayer(key) {
+      return ["coupon", "official"].includes(key);
+    }
+
+    function isMultiProductLayer(key) {
+      return ["streamer", "coins", "category", "streamerRed", "consumer"].includes(key);
+    }
+
+    function needsStreamerName(key) {
+      return ["streamer", "streamerRed"].includes(key);
+    }
+
+    function supportsThresholdRed(key) {
+      return false;
+    }
+
+    function needsCustomName(key) {
+      return ["category", "consumer"].includes(key);
+    }
+
+    function defaultCustomName(key) {
+      if (key === "category") return "品类加补券";
+      if (key === "consumer") return "消费券";
+      return "";
+    }
+
+    function supportsInflation(key) {
+      return key === "consumer";
+    }
+
+    function inflateOptionsHtml(coupon) {
+      const options = Array.isArray(coupon.inflateOptions) && coupon.inflateOptions.length
+        ? coupon.inflateOptions
+        : normalizeInflateOptions(coupon);
+      const list = options.length ? options : [{ id: 1, threshold: 0, value: 0 }];
+      return `
+        <div class="inflate-options">
+          ${list.map((option, index) => `
+            <div class="inflate-option" data-inflate-option="${escapeHtml(option.id || index + 1)}">
+              <span>满</span>
+              <input data-field="inflateThreshold" type="number" min="0" step="0.01" value="${numberValue(option.threshold)}" aria-label="膨胀后门槛">
+              <span>减</span>
+              <input data-field="inflateValue" type="number" min="0" step="0.01" value="${numberValue(option.value)}" aria-label="膨胀后面额">
+              <button class="remove-btn" type="button" data-remove-inflate-option="${escapeHtml(option.id || index + 1)}" aria-label="删除膨胀方案">×</button>
+            </div>
+          `).join("")}
+          <button class="utility mini-action" type="button" data-add-inflate-option>添加膨胀方案</button>
+        </div>
+      `;
+    }
+
+    function showsAutoPreview(key) {
+      return !["streamer", "category", "streamerRed", "consumer"].includes(key);
+    }
+
+    function productCheckboxesHtml(selectedIds) {
+      const selected = new Set(normalizeProductIds(selectedIds));
+      const checkedAll = selectedIds == null ? new Set(state.products.map(product => String(product.id))) : selected;
+      return `<div class="scope-options">${state.products.map(product => {
+        const id = String(product.id);
+        const checked = checkedAll.has(id) ? "checked" : "";
+        return `<label class="scope-option"><input data-field="productIds" type="checkbox" value="${product.id}" ${checked}>${escapeHtml(product.name || "未命名商品")}</label>`;
+      }).join("")}</div>`;
+    }
+
+    function ensureStreamerRedGroupIds() {
+      const groupIds = new Map();
+      for (const coupon of state.coupons.streamerRed || []) {
+        if (coupon.streamerGroupId) continue;
+        const scope = normalizeProductIds(coupon.productIds).sort().join("|");
+        const key = `${String(coupon.streamerName || "未命名主播").trim()}::${scope}`;
+        if (!groupIds.has(key)) groupIds.set(key, uid++);
+        coupon.streamerGroupId = groupIds.get(key);
+      }
+    }
+
+    function streamerRedGroups() {
+      ensureStreamerRedGroupIds();
+      const groups = new Map();
+      for (const coupon of state.coupons.streamerRed || []) {
+        const id = coupon.streamerGroupId || uid++;
+        if (!groups.has(id)) {
+          groups.set(id, {
+            id,
+            streamerName: coupon.streamerName || "主播A",
+            productIds: normalizeProductIds(coupon.productIds || []),
+            coupons: []
+          });
+        }
+        groups.get(id).coupons.push(coupon);
+      }
+      return [...groups.values()];
+    }
+
+    function syncProductCouponSelects() {
+      document.querySelectorAll("[data-field='productId']").forEach((select) => {
+        const selected = select.value;
+        select.innerHTML = productOptionsHtml(selected);
+      });
+      document.querySelectorAll("[data-scope-products]").forEach((cell) => {
+        const selected = [...cell.querySelectorAll("[data-field='productIds']:checked")].map(input => input.value);
+        cell.innerHTML = productCheckboxesHtml(selected);
+      });
+    }
+
+    function renderProducts() {
+      const body = document.getElementById("productRows");
+      if (!state.products.length) {
+        body.innerHTML = `<tr><td colspan="8">尚未添加商品。</td></tr>`;
+        return;
+      }
+      body.innerHTML = state.products.map(p => `
+        <tr data-product-id="${p.id}">
+          <td><input class="wide-input" data-field="name" value="${escapeHtml(p.name)}"></td>
+          <td><input class="small-input" data-field="price" type="number" min="0" step="0.01" value="${p.price}"></td>
+          <td><input class="small-input" data-field="qty" type="number" min="0" step="1" value="${p.qty}"></td>
+          <td><input data-field="vipEligible" type="checkbox" ${p.vipEligible !== false ? "checked" : ""} aria-label="可用 88VIP 折扣"></td>
+          <td class="product-special-cell">
+            <label class="product-special-control">
+              <input data-field="presale" type="checkbox" ${p.presale ? "checked" : ""} aria-label="预售商品">
+              <input class="small-input" data-field="depositPaid" type="number" min="0" step="0.01" value="${numberValue(p.depositPaid)}" placeholder="定金" ${p.presale ? "" : "disabled"} aria-label="已付定金">
+            </label>
+          </td>
+          <td class="product-special-cell">
+            <label class="product-special-control">
+              <input data-field="tradeInEligible" type="checkbox" ${p.tradeInEligible ? "checked" : ""} aria-label="享受政府补贴">
+              <span class="percent-input-wrap">
+                <input class="small-input" data-field="tradeInRate" type="number" min="0" step="0.01" value="${numberValue(p.tradeInRate)}" placeholder="15" ${p.tradeInEligible ? "" : "disabled"} aria-label="政府补贴比例">
+              </span>
+            </label>
+          </td>
+          <td><input data-field="locked" type="checkbox" ${p.locked ? "checked" : ""} aria-label="必须买"></td>
+          <td><button class="remove-btn" type="button" data-remove-product="${p.id}" aria-label="删除商品">×</button></td>
+        </tr>
+      `).join("");
+    }
+
+    function renderCouponSections() {
+      const wrap = document.getElementById("couponSections");
+      wrap.innerHTML = UI_ORDER.map(layer => {
+        const meta = COUPON_META[layer.key];
+        if (layer.key === "streamerRed") return renderStreamerRedSection(meta);
+        const rows = (state.coupons[layer.key] || []).map(c => couponRow(layer.key, c)).join("");
+        return `
+          <div class="section">
+            <div class="section-title">
+              <h3>${meta.title}</h3>
+              <button class="ghost" type="button" data-add-coupon="${layer.key}">${meta.add}</button>
+            </div>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    ${showsAutoPreview(layer.key) ? "<th>自动识别</th>" : ""}
+                    ${needsCustomName(layer.key) ? "<th>券名称</th>" : ""}
+                    ${needsStreamerName(layer.key) ? "<th>主播</th>" : ""}
+                    ${isSingleProductLayer(layer.key) ? "<th>适用商品</th>" : ""}
+                    ${isMultiProductLayer(layer.key) ? "<th>可用商品范围</th>" : ""}
+                    <th>类型</th>
+                    <th>门槛</th>
+                    <th>面额</th>
+                    <th>折扣力度</th>
+                    <th>封顶</th>
+                    ${supportsInflation(layer.key) ? "<th>可膨胀</th><th>膨胀方案</th>" : ""}
+                    ${supportsThresholdRed(layer.key) ? "<th>门槛红包</th>" : ""}
+                    <th>删除</th>
+                  </tr>
+                </thead>
+                <tbody>${rows}</tbody>
+              </table>
+            </div>
+            ${layer.key === "coupon" ? `<p class="hint">商品优惠券只按所选商品金额判断门槛并扣减；同一商品多张券会自动选择当前最优的一张。</p>` : ""}
+            ${layer.key === "official" ? `<p class="hint">官方立减同样按所选商品金额生效，不会用其它商品金额凑门槛。</p>` : ""}
+            ${layer.key === "streamer" ? `<p class="hint">主播折扣券只作用于勾选的主播商品；同一主播的主播红包可用范围建议保持一致。</p>` : ""}
+            ${layer.key === "streamerRed" ? `<p class="hint">主播红包只作用于勾选商品；单笔主播红包/消费券合计最多使用 10 个，其中门槛红包默认最多使用 1 个。</p>` : ""}
+            ${layer.key === "consumer" ? `<p class="hint">消费券每单最多使用 1 张；每张券的原始版本和膨胀选项只能择一使用。不同消费券如需一起用，必须分别分配到不同订单。</p>` : ""}
+          </div>
+        `;
+      }).join("") + `<ul class="warning-list" id="validationWarnings"></ul>`;
+    }
+
+    function renderStreamerRedSection(meta) {
+      const groups = streamerRedGroups();
+      const groupHtml = groups.map(group => `
+        <div class="streamer-red-group" data-streamer-red-group="${group.id}">
+          <div class="streamer-red-group-head">
+            <label class="group-field">
+              <span>主播名称</span>
+              <input class="wide-input" data-field="streamerName" value="${escapeHtml(group.streamerName)}" placeholder="主播名">
+            </label>
+            <div class="group-field">
+              <span>可用商品范围</span>
+              <div data-scope-products>${productCheckboxesHtml(group.productIds)}</div>
+            </div>
+            <div class="group-actions">
+              <button class="utility" type="button" data-add-streamer-red-item="${group.id}">添加红包</button>
+              <button class="utility danger" type="button" data-remove-streamer-red-group="${group.id}">删除主播</button>
+            </div>
+          </div>
+          <div class="streamer-red-wrap">
+            <div class="streamer-red-list">${group.coupons.map((c, index) => streamerRedItem(c, index)).join("")}</div>
+          </div>
+        </div>
+      `).join("");
+      return `
+        <div class="section">
+          <div class="section-title">
+            <h3>${meta.title}</h3>
+            <button class="ghost" type="button" data-add-coupon="streamerRed">${meta.add}</button>
+          </div>
+          <div class="streamer-red-groups">${groupHtml || `<p class="hint">暂未添加主播红包。</p>`}</div>
+          <p class="hint">主播红包按主播录入一次可用商品范围；同一主播下可添加多个无门槛红包金额，组内红包默认共享同一批可用商品。单笔主播红包/消费券合计最多使用 10 个。</p>
+        </div>
+      `;
+    }
+
+    function streamerRedItem(c, index) {
+      return `
+        <div class="streamer-red-item" data-streamer-red-coupon="${c.id}">
+          <label>
+            红包 ${index + 1}
+            <input data-field="fixedValue" type="number" min="0" step="0.01" value="${numberValue(c.value)}" aria-label="主播红包金额">
+          </label>
+          <button class="remove-btn" type="button" data-remove-coupon="streamerRed:${c.id}" aria-label="删除红包">×</button>
+        </div>
+      `;
+    }
+
+    function couponRow(group, c) {
+      const productOptions = productOptionsHtml(c.productId || state.products[0]?.id || "");
+      const productChecks = productCheckboxesHtml(c.productIds || state.products.map(product => product.id));
+      return `
+        <tr data-coupon-group="${group}" data-coupon-id="${c.id}" data-kind="${c.kind}" data-inflate="${c.canInflate ? "true" : "false"}">
+          ${showsAutoPreview(group) ? `<td><div class="coupon-preview">${escapeHtml(couponLabel(group, c))}</div></td>` : ""}
+          ${needsCustomName(group) ? `<td><input class="name-input" data-field="customName" value="${escapeHtml(c.customName || defaultCustomName(group))}" placeholder="券名称"></td>` : ""}
+          ${needsStreamerName(group) ? `<td><input class="wide-input" data-field="streamerName" value="${escapeHtml(c.streamerName || "")}" placeholder="主播名"></td>` : ""}
+          ${isSingleProductLayer(group) ? `<td><select data-field="productId" aria-label="适用商品">${productOptions}</select></td>` : ""}
+          ${isMultiProductLayer(group) ? `<td class="scope-cell" data-scope-products>${productChecks}</td>` : ""}
+          <td>
+            <select data-field="kind">
+              <option value="fixed" ${c.kind === "fixed" ? "selected" : ""}>满减/直减</option>
+              <option value="percent" ${c.kind === "percent" ? "selected" : ""}>折扣</option>
+            </select>
+          </td>
+          <td class="fixed-field"><input class="small-input" data-field="threshold" type="number" min="0" step="0.01" value="${c.kind === "fixed" ? c.threshold : 0}"></td>
+          <td class="fixed-field"><input class="small-input" data-field="fixedValue" type="number" min="0" step="0.01" value="${c.kind === "fixed" ? c.value : 0}"></td>
+          <td class="percent-field"><input class="small-input" data-field="percentValue" type="number" min="0" step="0.01" value="${c.kind === "percent" ? c.value : 0.9}"></td>
+          <td class="percent-field"><input class="small-input" data-field="cap" type="number" min="0" step="0.01" value="${c.kind === "percent" ? c.cap : 0}"></td>
+          ${supportsInflation(group) ? `<td><input data-field="canInflate" type="checkbox" ${c.canInflate ? "checked" : ""} aria-label="可膨胀"></td><td class="inflate-field">${inflateOptionsHtml(c)}</td>` : ""}
+          ${supportsThresholdRed(group) ? `<td><input data-field="thresholdRed" type="checkbox" ${c.thresholdRed ? "checked" : ""} aria-label="门槛红包"></td>` : ""}
+          <td><button class="remove-btn" type="button" data-remove-coupon="${group}:${c.id}" aria-label="删除优惠">×</button></td>
+        </tr>
+      `;
+    }
+
+    function renderResult() {
+      readForm();
+      syncProductCouponSelects();
+      readForm();
+      refreshCouponPreviews();
+      const settings = readSettings();
+      const result = calculateOrder(state.products, state.coupons, settings);
+      document.getElementById("finalPrice").textContent = money(result.final);
+      document.getElementById("savedAmount").textContent = money(result.saved);
+      document.getElementById("expressionText").textContent = `计算式：${expressionFor(result)} = ${money(result.final)}`;
+      renderWaterfall(result);
+      renderSplitAdvice(result, settings);
+      renderValidationWarnings();
+      markResultFresh();
+    }
+
+    function markResultFresh() {
+      const status = document.getElementById("resultStatus");
+      if (!status) return;
+      status.dataset.state = "fresh";
+      status.textContent = "结果已按当前输入计算。";
+    }
+
+    function markResultStale() {
+      splitSearchRevision += 1;
+      window.clearTimeout(splitSearchTimer);
+      const splitList = document.getElementById("splitAdvice");
+      if (splitList) {
+        splitList.setAttribute("aria-busy", "false");
+        splitList.innerHTML = `<li>商品或权益已修改，请重新计算拆单方案。</li>`;
+      }
+      const addOnList = document.getElementById("addOnAdvice");
+      if (addOnList) {
+        addOnList.setAttribute("aria-busy", "false");
+        addOnList.innerHTML = `<li>商品或权益已修改，请重新计算凑单方案。</li>`;
+      }
+      const status = document.getElementById("resultStatus");
+      if (!status) return;
+      status.dataset.state = "stale";
+      status.textContent = "输入内容已变化，当前结果尚未重新计算。填写完成后点击「开始计算优惠结果」。";
+    }
+
+    function handleFormChanged() {
+      readForm();
+      refreshCouponPreviews();
+      renderValidationWarnings();
+      markResultStale();
+    }
+
+    function updateProductSpecialControls(row) {
+      if (!row) return;
+      const presale = row.querySelector("[data-field='presale']");
+      const deposit = row.querySelector("[data-field='depositPaid']");
+      const tradeIn = row.querySelector("[data-field='tradeInEligible']");
+      const rate = row.querySelector("[data-field='tradeInRate']");
+      if (deposit && presale) deposit.disabled = !presale.checked;
+      if (rate && tradeIn) rate.disabled = !tradeIn.checked;
+    }
+
+    function runCalculation() {
+      const active = document.activeElement;
+      if (active?.matches?.("input, select")) active.blur();
+      readForm();
+      if (!state.products.length) {
+        renderEmptyResult();
+        showToast("请先添加商品。");
+        return;
+      }
+      renderResult();
+      showToast("已按当前商品和优惠权益重新计算。");
+    }
+
+    function productSetText(ids) {
+      return normalizeProductIds(ids).sort().join("|");
+    }
+
+    function renderValidationWarnings() {
+      const container = document.getElementById("validationWarnings");
+      if (!container) return;
+      const messages = [];
+      const streamerScopes = new Map();
+      for (const coupon of state.coupons.streamer || []) {
+        const name = String(coupon.streamerName || "").trim();
+        if (!name) continue;
+        const ids = normalizeProductIds(coupon.productIds);
+        const merged = new Set(streamerScopes.get(name) || []);
+        ids.forEach(id => merged.add(id));
+        streamerScopes.set(name, merged);
+      }
+      for (const red of state.coupons.streamerRed || []) {
+        const name = String(red.streamerName || "").trim();
+        if (!name || !streamerScopes.has(name)) continue;
+        const discountScope = productSetText([...streamerScopes.get(name)]);
+        const redScope = productSetText(red.productIds);
+        if (discountScope !== redScope) {
+          messages.push(`${name} 的主播红包可用商品范围与主播折扣券不一致，建议保持一致后再计算。`);
+        }
+      }
+      const scopedLayers = [
+        ["streamer", "主播折扣券"],
+        ["coins", "淘金币"],
+        ["category", "品类加补券"],
+        ["streamerRed", "主播红包"],
+        ["consumer", "消费券"]
+      ];
+      for (const [key, label] of scopedLayers) {
+        for (const coupon of state.coupons[key] || []) {
+          if (normalizeProductIds(coupon.productIds).length) continue;
+          const name = coupon.customName || coupon.streamerName || label;
+          const displayName = name === label ? label : `${name}（${label}）`;
+          messages.push(`${displayName} 未选择可用商品范围，不会参与本次计算。`);
+        }
+      }
+      container.innerHTML = messages.map(message => `<li>${escapeHtml(message)}</li>`).join("");
+    }
+
+    function couponsWithoutConsumerInflation(coupons) {
+      const next = {};
+      for (const key of Object.keys(coupons)) {
+        next[key] = (coupons[key] || []).map((coupon) => key === "consumer"
+          ? { ...coupon, canInflate: false, inflatedUsed: false }
+          : { ...coupon });
+      }
+      return next;
+    }
+
+    function stepDiscount(result, key) {
+      return numberValue((result.steps || []).find(step => step.key === key)?.discount);
+    }
+
+    function orderConsumerActionHtml(result) {
+      const consumer = result.steps.flatMap(step => step.pickedCouponObjects || []).find(c => c.redGroup === "consumer");
+      if (!consumer) return `<div class="order-consumer">本单不使用消费券，无需膨胀。</div>`;
+      const name = escapeHtml(consumer.customName || "消费券");
+      const chosen = consumer.kind === "percent"
+        ? `${percentLabel(consumer.value)}${consumer.cap > 0 ? `，封顶 ${money(consumer.cap)}` : ""}`
+        : `满 ${money(consumer.threshold)} 减 ${money(consumer.value)}`;
+      const action = consumer.inflatedUsed
+        ? `先膨胀 ${name}：原满 ${money(consumer.originalThreshold)} 减 ${money(consumer.originalValue)} → ${chosen}`
+        : `使用原始券：${chosen}，无需膨胀`;
+      return `<div class="order-consumer"><strong>本单消费券：${name}</strong><p>${action}</p></div>`;
+    }
+
+    function renderWaterfall(result) {
+      const container = document.getElementById("waterfall");
+      const baseStep = `
+        <div class="step">
+          <span class="step-index">0</span>
+          <div class="step-main">
+            <div class="step-name">商品原价</div>
+            <div class="step-detail">${state.products.map(p => `${escapeHtml(p.name)} × ${p.qty}${p.vipEligible === false ? "（不支持 88VIP）" : ""}`).join("，")}</div>
+          </div>
+          <div class="step-money">${money(result.subtotal)}</div>
+        </div>
+      `;
+      const steps = result.steps.map((step, index) => `
+        <div class="step">
+          <span class="step-index">${index + 1}</span>
+          <div class="step-main">
+            <div class="step-name">${step.label}</div>
+            <div class="step-detail">${step.discount ? `本层优惠 ${money(step.discount)}` : escapeHtml(step.picked)}</div>
+            ${step.discount ? `<div class="step-detail-grid">${waterfallCouponPills(step)}</div>` : ""}
+          </div>
+          <div class="step-money">${money(step.after)}</div>
+        </div>
+      `).join("");
+      container.innerHTML = baseStep + steps;
+    }
+
+    function waterfallCouponPills(step) {
+      const labels = step.pickedCoupons || [];
+      if (!labels.length) return `<span class="step-coupon-pill">未使用</span>`;
+      const counts = new Map();
+      labels.forEach(label => counts.set(label, (counts.get(label) || 0) + 1));
+      return [...counts.entries()].map(([label, count]) => `<span class="step-coupon-pill">${escapeHtml(label)}${count > 1 ? ` ×${count}` : ""}</span>`).join("");
+    }
+
+    function renderAddOnAdvice(current, settings, baseline, products, coupons, revision) {
+      const list = document.getElementById("addOnAdvice");
+      const search = searchAddOnPlans(products, coupons, settings, baseline);
+      list.setAttribute("aria-busy", "true");
+      list.innerHTML = `<li role="status">正在比较指定品类券凑单及优惠分摊后的必买商品成本…</li>`;
+      const advance = () => {
+        if (revision !== splitSearchRevision) return;
+        try {
+          const started = performance.now();
+          let next;
+          do { next = search.next(); } while (!next.done && performance.now() - started < 12);
+          if (!next.done) {
+            splitSearchTimer = window.setTimeout(advance, 0);
+            return;
+          }
+          list.setAttribute("aria-busy", "false");
+          renderAddOnSearchResult(list, next.value, baseline, settings);
+        } catch (error) {
+          list.setAttribute("aria-busy", "false");
+          list.innerHTML = `<li>凑单比较未完成，请重新计算。</li>`;
+          console.error("Add-on search failed", error);
+        }
+      };
+      splitSearchTimer = window.setTimeout(advance, 0);
+    }
+
+    function renderAddOnSearchResult(list, search, baseline, settings) {
+      const note = `在 ${money(settings.maxAddAmount)} 内按指定优惠范围试算，不保证全局最低；未计运费。`;
+      if (!search.suggestions.length) {
+        list.innerHTML = `<li><span class="tag">暂不建议额外购买</span>${search.noRequired ? "未标记必买商品，无法比较必买成本。" : "已试算的凑单方案中，未发现能进一步降低必买商品分摊成本的方案。"}<p class="hint">${note}</p></li>`;
+        return;
+      }
+      list.innerHTML = `<li>以下是互斥备选方案，选一种即可，不要同时照做。${note}</li>` + search.suggestions.map((s, index) => `
+        <li class="add-on-option">
+          <div class="result-insight-head"><strong>方案 ${index + 1}：新增 ${money(s.add)} 商品</strong><span>必买商品少 ${money(s.requiredSaving)}</span></div>
+          <p>${escapeHtml(s.profile.name)}；与 ${escapeHtml(s.targetNames)} 放在第 ${s.targetIndex + 1} 单一起结算，共 ${s.orders.length} 单。</p>
+          <div class="split-payline">
+            <div class="split-payitem"><span>必买商品综合成本（含已付定金）</span><strong>${money(search.baselineRequired)} → ${money(s.requiredCost)}</strong></div>
+            <div class="split-payitem"><span>凑单品分摊成本</span><strong>${money(s.addOnCost)}</strong></div>
+            <div class="split-payitem"><span>全部订单待付</span><strong>${money(s.total)}</strong></div>
+          </div>
+          <p>相较上方不凑单方案，${Math.abs(s.total - baseline.total) < 0.005 ? "待付总额不变" : s.total > baseline.total ? `还需多付 ${money(s.total - baseline.total)}` : `待付也减少 ${money(baseline.total - s.total)}`}。凑单品需实际购买并保留，不能按退款后仍保留优惠估算。</p>
+          <p><strong>凑单商品条件：</strong>${escapeHtml(s.profile.requirements.join("；"))}。${s.profile.vipEligible ? "需支持 88VIP 95 折。" : "未假定享受 88VIP 折扣。"}未假定其他商品券、官方立减或政府补贴。</p>
+          <p class="hint">已计入凑单品对品类券、消费券等优惠的分摊；必买成本下降不代表总支出一定下降。需找到满足上述范围的真实商品后再核算。</p>
+          <details class="add-on-details"><summary>查看这套方案的每单商品、券及膨胀操作</summary><ul class="advice-list">${s.orders.map((order, i) => splitOrderAdviceHtml(`第 ${i + 1} 单`, order.products, order.result)).join("")}</ul></details>
+        </li>`).join("");
+    }
+
+    function addOnEligibilityProfiles(products, coupons) {
+      const required = products.filter(p => p.locked !== false);
+      const profiles = new Map();
+      const add = profile => {
+        const key = JSON.stringify(profile.bindings) + profile.vipEligible;
+        if (!profiles.has(key)) profiles.set(key, { ...profile, id: key });
+      };
+      for (const group of ["category", "consumer"]) {
+        for (const coupon of coupons[group] || []) {
+          const ids = normalizeProductIds(coupon.productIds);
+          const anchors = required.filter(p => ids.includes(productKey(p)));
+          if (!anchors.length) continue;
+          const label = couponLabel(group, coupon, false);
+          add({ name: `只为${group === "category" ? "品类券" : "消费券"}凑单`, bindings: { [group]: [coupon.id] },
+            anchors: anchors.map(productKey), vipEligible: false, requirements: [`可用 ${label}；不参与其他优惠范围`] });
+        }
+      }
+      for (const product of required) {
+        const bindings = {};
+        const requirements = [];
+        for (const [group, list] of Object.entries(coupons)) {
+          if (!isMultiProductLayer(group)) continue;
+          const matches = list.filter(c => normalizeProductIds(c.productIds).includes(productKey(product)));
+          if (!matches.length) continue;
+          bindings[group] = matches.map(c => c.id);
+          if (group === "streamerRed") {
+            requirements.push(`可用 ${[...new Set(matches.map(c => c.streamerName || "已录入主播"))].join("、")} 的主播红包`);
+          } else {
+            requirements.push(`可用 ${matches.map(c => couponLabel(group, c, false)).join("、")}`);
+          }
+        }
+        if (!Object.keys(bindings).length) continue;
+        add({ name: `按「${product.name}」的共享优惠范围凑单`, bindings, anchors: [productKey(product)],
+          vipEligible: product.vipEligible !== false, requirements });
+      }
+      return [...profiles.values()];
+    }
+
+    function* searchAddOnPlans(products, coupons, settings, baseline, options = {}) {
+      const requiredKeys = new Set(products.filter(p => p.locked !== false).map(productKey));
+      const deposits = products.filter(p => requiredKeys.has(productKey(p))).reduce((sum, p) => sum + productDeposit(p), 0);
+      const requiredCost = orders => orders.reduce((sum, o) => sum + requiredFinalAmount(o.result, requiredKeys), deposits);
+      const baselineRequired = requiredCost(baseline.orders);
+      const budget = options.budget ?? 8000;
+      let evaluations = 0;
+      const suggestions = new Map();
+      const evaluate = function* (basket, available, layer = null) {
+        if (evaluations >= budget) return null;
+        const result = calculateOrder(basket, available, settings, layer);
+        evaluations += 1;
+        yield evaluations;
+        return result;
+      };
+      if (!requiredKeys.size) return { suggestions: [], baselineRequired, noRequired: true, evaluations };
+      const step = Math.max(1, Math.round(numberValue(settings.addStep, 1) * 100));
+      const maxCount = Math.floor(numberValue(settings.maxAddAmount, 500) * 100 / step);
+      const opportunities = new Map();
+      for (const profile of addOnEligibilityProfiles(products, coupons)) {
+        const anchorProducts = products.filter(p => profile.anchors.includes(productKey(p)));
+        const others = products.filter(p => !profile.anchors.includes(productKey(p)));
+        const routes = [baseline.orders.map(o => o.products), [products]];
+        if (others.length) routes.push([anchorProducts, others], [others, anchorProducts]);
+        for (const groups of routes) {
+          groups.forEach((group, targetIndex) => {
+            if (!group.some(p => profile.anchors.includes(productKey(p)))) return;
+            const key = profile.id + JSON.stringify(groups.map(splitBasketKey)) + targetIndex;
+            opportunities.set(key, { profile, groups, targetIndex });
+          });
+        }
+      }
+      for (const opportunity of [...opportunities.values()].slice(0, 24)) {
+        if (evaluations >= budget) break;
+        const { profile, groups, targetIndex } = opportunity;
+        let available = couponsWithAddOnEligibility(coupons, -1, profile);
+        const prefix = [];
+        for (const group of groups.slice(0, targetIndex)) {
+          const result = yield* evaluate(group, available);
+          if (!result) break;
+          prefix.push({ products: group, result });
+          available = removeUsedCoupons(available, result.usedIds);
+        }
+        if (prefix.length !== targetIndex) break;
+        const addProduct = amount => ({ id: -1, name: "待选凑单商品", price: amount, qty: 1,
+          vipEligible: profile.vipEligible, locked: false, presale: false, depositPaid: 0, tradeInEligible: false });
+        const amounts = new Set();
+        const addAmount = count => { if (count >= 1 && count <= maxCount) amounts.add(count * step / 100); };
+        // Find threshold amounts after earlier discounts, then sample other price points.
+        for (const group of ["category", "consumer"]) {
+          for (const coupon of (available[group] || []).filter(c => (profile.bindings[group] || []).includes(c.id))) {
+            const thresholds = [coupon.threshold, ...(group === "consumer" && coupon.canInflate ? normalizeInflateOptions(coupon).map(o => o.threshold) : [])];
+            for (const threshold of thresholds.filter(t => t > 0).slice(0, 8)) {
+              let low = 1;
+              let high = maxCount;
+              while (low < high) {
+                const mid = Math.floor((low + high) / 2);
+                const before = yield* evaluate([...groups[targetIndex], addProduct(mid * step / 100)], available, group === "consumer" ? "red" : group);
+                if (!before) break;
+                const ids = normalizeProductIds(coupon.productIds);
+                const base = before.finalItems.filter(item => ids.includes(String(item.sourceProductId))).reduce((sum, item) => sum + item.amount, 0);
+                if (base + 1e-9 >= threshold) high = mid; else low = mid + 1;
+              }
+              [low - 1, low, low + 1].forEach(addAmount);
+            }
+          }
+        }
+        const stride = Math.max(1, Math.ceil(maxCount / 80));
+        for (let count = 1; count <= maxCount; count += stride) addAmount(count);
+        addAmount(maxCount);
+        for (const amount of amounts) {
+          if (evaluations >= budget) break;
+          let remainingCoupons = available;
+          const orders = [...prefix];
+          for (let i = targetIndex; i < groups.length; i += 1) {
+            const basket = i === targetIndex ? [...groups[i], addProduct(amount)] : groups[i];
+            const result = yield* evaluate(basket, remainingCoupons);
+            if (!result) break;
+            orders.push({ products: basket, result });
+            remainingCoupons = removeUsedCoupons(remainingCoupons, result.usedIds);
+          }
+          if (orders.length !== groups.length) break;
+          const cost = requiredCost(orders);
+          const saving = baselineRequired - cost;
+          if (saving < 0.01) continue;
+          const total = Math.round(orders.reduce((sum, o) => sum + orderPayable(o.result), 0) * 100) / 100;
+          const addOnCost = orders.reduce((sum, o) => sum + addOnFinalAmount(o.result, -1), 0);
+          const suggestion = { profile, add: amount, orders, targetIndex, targetNames: groups[targetIndex].map(p => p.name).join("、"),
+            requiredCost: cost, requiredSaving: saving, total, addOnCost };
+          const key = profile.id;
+          const previous = suggestions.get(key);
+          if (!previous || saving > previous.requiredSaving + 0.005 || (Math.abs(saving - previous.requiredSaving) <= 0.005 && total < previous.total)) suggestions.set(key, suggestion);
+        }
+      }
+      return { suggestions: [...suggestions.values()].sort((a, b) => b.requiredSaving - a.requiredSaving || a.total - b.total).slice(0, 3),
+        baselineRequired, evaluations, budgetReached: evaluations >= budget };
+    }
+
+    function requiredFinalAmount(result, requiredKeys) {
+      if (!requiredKeys.size) return result.final;
+      return (result.finalItems || [])
+        .filter(item => requiredKeys.has(String(item.sourceProductId)) || requiredKeys.has(String(item.id)))
+        .reduce((sum, item) => sum + item.amount, 0);
+    }
+
+    function addOnFinalAmount(result, addOnId) {
+      return (result.finalItems || [])
+        .filter(item => String(item.sourceProductId) === String(addOnId) || String(item.id) === String(addOnId))
+        .reduce((sum, item) => sum + item.amount, 0);
+    }
+
+    function couponsWithAddOnEligibility(coupons, addOnId, profile) {
+      const next = {};
+      for (const key of Object.keys(coupons)) {
+        next[key] = (coupons[key] || []).map((coupon) => {
+          if (!isMultiProductLayer(key)) return { ...coupon };
+          const ids = normalizeProductIds(coupon.productIds);
+          const applies = ids.length && (profile?.bindings[key] || []).includes(coupon.id);
+          return { ...coupon, productIds: applies ? [...new Set([...ids, String(addOnId)])] : ids };
+        });
+      }
+      return next;
+    }
+
+    function renderSplitAdvice(current, settings) {
+      const list = document.getElementById("splitAdvice");
+      const revision = ++splitSearchRevision;
+      window.clearTimeout(splitSearchTimer);
+      const products = structuredClone(state.products).filter(p => numberValue(p.qty) > 0);
+      const coupons = structuredClone(state.coupons);
+      const addOnList = document.getElementById("addOnAdvice");
+      addOnList.setAttribute("aria-busy", "true");
+      addOnList.innerHTML = `<li>先比较不凑单的付款方案，再核算额外购买是否值得。</li>`;
+      if (products.reduce((sum, p) => sum + Math.floor(numberValue(p.qty)), 0) < 2) {
+        list.setAttribute("aria-busy", "false");
+        const baseline = { orders: [{ products, result: current }], total: orderPayable(current), evaluations: 0 };
+        renderSplitSearchResult(list, baseline, current);
+        renderAddOnAdvice(current, settings, baseline, products, coupons, revision);
+        return;
+      }
+      const search = searchOrderSplits(products, coupons, current, settings);
+      list.setAttribute("aria-busy", "true");
+      list.innerHTML = `<li role="status">正在比较合单、多笔拆单和每单用券方案…</li>`;
+      const advance = () => {
+        if (revision !== splitSearchRevision) return;
+        try {
+          const started = performance.now();
+          let next;
+          do {
+            next = search.next();
+          } while (!next.done && performance.now() - started < 12);
+          if (next.done) {
+            list.setAttribute("aria-busy", "false");
+            renderSplitSearchResult(list, next.value, current);
+            renderAddOnAdvice(current, settings, next.value, products, coupons, revision);
+          } else {
+            splitSearchTimer = window.setTimeout(advance, 0);
+          }
+        } catch (error) {
+          list.setAttribute("aria-busy", "false");
+          list.innerHTML = `<li>本次拆单比较未完成，请重新计算。不能据此判断合单更便宜。</li>`;
+          addOnList.setAttribute("aria-busy", "false");
+          addOnList.innerHTML = `<li>付款方案未完成，暂无法比较凑单收益。</li>`;
+          console.error("Split search failed", error);
+        }
+      };
+      splitSearchTimer = window.setTimeout(advance, 0);
+    }
+
+    function renderSplitSearchResult(list, best, current) {
+      const saving = orderPayable(current) - best.total;
+      const note = `已比较 ${best.evaluations} 次订单试算，包含商品分组、优惠门槛与用券顺序。${best.budgetReached ? "本次已达到搜索预算；" : ""}以下为已搜索方案中的较优结果，不保证全局最优；未计运费。`;
+      if (best.orders.length < 2 || saving < 0.01) {
+        list.innerHTML = `<li><span class="tag">当前方案：合为 1 单</span>待付 ${money(orderPayable(current))}。${best.evaluations ? "暂未搜索到更省的拆单方案。" : "当前商品无需拆单。"}<p class="hint">每单最多使用一张消费券。${best.evaluations ? note : ""}</p></li>${splitOrderAdviceHtml("第 1 单", best.orders[0].products, best.orders[0].result)}`;
+        return;
+      }
+      list.innerHTML = `
+        <li class="split-summary-card">
+          <div class="split-summary-line">
+            <span><span class="tag">建议拆 ${best.orders.length} 单</span>按以下顺序分别结算</span>
+            <strong>比合单少付 ${money(saving)}</strong>
+          </div>
+          <div class="split-route">
+            <span class="split-route-chip">合单 ${money(orderPayable(current))}</span>
+            <span class="split-route-chip">拆单合计 ${money(best.total)}</span>
+            ${best.orders.map((order, index) => `<span class="split-route-chip">第 ${index + 1} 单 ${money(orderPayable(order.result))}</span>`).join("")}
+          </div>
+          <p class="hint">每单最多一张消费券，膨胀操作见对应订单。每张券或红包仅分配给一单；每单最多使用 10 个平台红包。${note}</p>
+        </li>
+        ${best.orders.map((order, index) => splitOrderAdviceHtml(`第 ${index + 1} 单`, order.products, order.result)).join("")}
+      `;
+    }
+
+    function splitOrderAdviceHtml(title, products, result) {
+      const grouped = new Map();
+      products.forEach(p => {
+        const key = productKey(p);
+        const item = grouped.get(key) || { ...p, qty: 0 };
+        item.qty += numberValue(p.qty, 1);
+        grouped.set(key, item);
+      });
+      const productChips = [...grouped.values()].map(p => `<span class="split-product-chip">${escapeHtml(p.name)} ×${p.qty} · ${money(productGross(p))}</span>`).join("");
+      const discountItems = splitDiscountDetails(result).map(item => `<li>${item}</li>`).join("");
+      const discounts = discountItems
+        ? `<div class="split-benefit-title">本单用券路径</div><ul class="split-discounts">${discountItems}</ul>`
+        : `<div class="split-benefit-title">本单无额外优惠，按商品当前价付款。</div>`;
+      return `
+        <li class="split-card">
+          <div class="split-card-head">
+            <span><span class="tag">${title}</span>单独结算这一组商品</span>
+            <strong>付款 ${money(result.final)}</strong>
+          </div>
+          <div class="split-products">${productChips}</div>
+          ${orderConsumerActionHtml(result)}
+          <div class="split-payline">
+            <div class="split-payitem"><span>商品原价</span><strong>${money(result.subtotal)}</strong></div>
+            <div class="split-payitem"><span>优惠及已付抵扣</span><strong>${money(result.saved)}</strong></div>
+            <div class="split-payitem"><span>实付金额</span><strong>${money(result.final)}</strong></div>
+          </div>
+          ${discounts}
+        </li>
+      `;
+    }
+
+    function splitDiscountDetails(result) {
+      return result.steps
+        .filter(step => step.discount > 0.005 && step.picked && step.picked !== "未使用")
+        .flatMap(step => {
+          if (step.key !== "red") return [step];
+          return ["consumer", "streamerRed"].map(group => {
+            const pickedCouponObjects = (step.pickedCouponObjects || []).filter(c => c.redGroup === group);
+            return { ...step, label: COUPON_META[group].title, pickedCouponObjects,
+              discount: pickedCouponObjects.reduce((sum, c) => sum + numberValue(c.appliedDiscount), 0) };
+          }).filter(step => step.pickedCouponObjects.length);
+        })
+        .map(step => `
+          <div class="split-benefit-row">
+            <div class="split-benefit-label">
+              <span>${escapeHtml(step.label)}</span>
+              <small>优惠 ${money(step.discount)}</small>
+            </div>
+            <div class="split-benefit-coupons">${compactPickedList(step.pickedCouponObjects?.length ? step.pickedCouponObjects.map(c => c.label || couponLabel(c.redGroup || step.key, c, isSingleProductLayer(c.redGroup || step.key))) : step.pickedCoupons || step.picked)}</div>
+          </div>
+        `);
+    }
+
+    function compactPickedList(picked) {
+      if (!Array.isArray(picked)) return escapeHtml(picked);
+      const counts = new Map();
+      picked.map(item => String(item).trim()).filter(Boolean).forEach((item) => {
+        counts.set(item, (counts.get(item) || 0) + 1);
+      });
+      return [...counts.entries()].map(([item, count]) => `<span class="split-coupon-pill">${escapeHtml(item)}${count > 1 ? ` ×${count}` : ""}</span>`).join("");
+    }
+
+    function expandUnits(products) {
+      const units = [];
+      for (const p of products) {
+        const count = Math.max(0, Math.floor(numberValue(p.qty, 1)));
+        for (let i = 0; i < count; i += 1) {
+          units.push({
+            id: `${p.id}-${i}`,
+            sourceProductId: p.sourceProductId || p.id,
+            name: p.name,
+            price: numberValue(p.price),
+            qty: 1,
+            vipEligible: p.vipEligible !== false,
+            presale: Boolean(p.presale),
+            depositPaid: count ? numberValue(p.depositPaid) / count : 0,
+            tradeInEligible: Boolean(p.tradeInEligible),
+            tradeInRate: numberValue(p.tradeInRate),
+            locked: p.locked
+          });
+        }
+      }
+      return units;
+    }
+
+    function orderPayable(result) {
+      return Math.round((result.final + Number.EPSILON) * 100) / 100;
+    }
+
+    function splitBasketKey(products) {
+      return JSON.stringify(products.map(p => [String(p.id), p.qty]).sort((a, b) => a[0].localeCompare(b[0])));
+    }
+
+    function splitCouponKey(coupons) {
+      return JSON.stringify(Object.keys(coupons).sort().map(key => [key,
+        coupons[key].map(c => [c.id, Boolean(c.canInflate)])
+      ]));
+    }
+
+    function splitProductQuantity(product, qty) {
+      return { ...product, qty, depositPaid: numberValue(product.depositPaid) * qty / product.qty };
+    }
+
+    function subtractSplitBasket(products, basket) {
+      const counts = new Map(basket.map(p => [String(p.id), p.qty]));
+      return products.map(p => splitProductQuantity(p, p.qty - (counts.get(String(p.id)) || 0))).filter(p => p.qty > 0);
+    }
+
+    function splitBasketCandidates(products, coupons) {
+      const baskets = new Map();
+      const add = basket => {
+        if (basket.length) baskets.set(splitBasketKey(basket), basket);
+      };
+      add(products);
+      const count = products.reduce((sum, p) => sum + p.qty, 0);
+      // Small carts enumerate quantity combinations, not permutations of identical units.
+      if (count <= 8) {
+        const visit = (index, basket) => {
+          if (index === products.length) return add(basket);
+          const p = products[index];
+          for (let qty = 0; qty <= p.qty; qty += 1) {
+            visit(index + 1, qty ? [...basket, splitProductQuantity(p, qty)] : basket);
+          }
+        };
+        visit(0, []);
+        return [...baskets.values()];
+      }
+
+      const scopedTargets = [];
+      for (const [group, list] of Object.entries(coupons)) {
+        for (const coupon of list) {
+          const scope = products.filter(p => isSingleProductLayer(group)
+            ? isCouponForProduct(coupon, p)
+            : normalizeProductIds(coupon.productIds).includes(productKey(p)));
+          if (!scope.length) continue;
+          add(scope);
+          add(subtractSplitBasket(products, scope));
+          const thresholds = [numberValue(coupon.threshold)];
+          if (group === "consumer" && coupon.canInflate) {
+            thresholds.push(...normalizeInflateOptions(coupon).map(o => o.threshold));
+          }
+          thresholds.filter(t => t > 0).forEach(threshold => scopedTargets.push({ scope, threshold }));
+        }
+      }
+      for (const p of products) {
+        for (const qty of new Set([1, Math.ceil(p.qty / 2), p.qty])) {
+          const basket = [splitProductQuantity(p, qty)];
+          add(basket);
+          add(subtractSplitBasket(products, basket));
+        }
+      }
+      const priceSort = (a, b) => numberValue(a.price) - numberValue(b.price);
+      for (const sorted of [[...products].sort(priceSort), [...products].sort(priceSort).reverse()]) {
+        for (let end = 1; end < sorted.length; end += 1) add(sorted.slice(0, end));
+      }
+      // Probe threshold-sized baskets and their neighbors; full pricing still happens below.
+      for (const { scope, threshold } of scopedTargets) {
+        for (const sorted of [[...scope].sort(priceSort), [...scope].sort(priceSort).reverse()]) {
+          let subtotal = 0;
+          const prefix = [];
+          for (const p of sorted) {
+            const needed = p.price > 0 ? Math.ceil((threshold - subtotal) / p.price) : p.qty;
+            if (needed > 0 && needed <= p.qty) {
+              for (const qty of new Set([Math.max(1, needed - 1), needed, Math.min(p.qty, needed + 1)])) {
+                const basket = [...prefix, splitProductQuantity(p, qty)];
+                add(basket);
+                add(subtractSplitBasket(products, basket));
+              }
+            }
+            prefix.push(p);
+            subtotal += productGross(p);
+          }
+        }
+      }
+      // Prefer baskets close to an eligible threshold, without excluding large carts.
+      const score = basket => {
+        let distance = Infinity;
+        for (const { scope, threshold } of scopedTargets) {
+          const ids = new Set(scope.map(p => String(p.id)));
+          const amount = basket.filter(p => ids.has(String(p.id))).reduce((sum, p) => sum + productGross(p), 0);
+          if (amount >= threshold) distance = Math.min(distance, (amount - threshold) / threshold);
+        }
+        return distance;
+      };
+      const ranked = [...baskets.values()].map(basket => ({ basket, score: score(basket) }));
+      ranked.sort((a, b) => a.score - b.score);
+      const selected = new Map();
+      [products, ...ranked.slice(0, 64).map(item => item.basket), ...[...baskets.values()].slice(0, 32)]
+        .forEach(basket => selected.set(splitBasketKey(basket), basket));
+      return [...selected.values()];
+    }
+
+    function splitCouponAlternatives(coupons, result) {
+      const alternatives = [];
+      if ((coupons.consumer || []).some(c => c.canInflate && result.usedIds.has(c.id))) {
+        alternatives.push(couponsWithoutConsumerInflation(coupons));
+      }
+      // Reserving a selected coupon lets another order use it, or exposes a weaker alternative.
+      const selected = ["consumer", "category", "streamer", "coupon", "coins"]
+        .flatMap(group => (coupons[group] || []).filter(c => result.usedIds.has(c.id)));
+      selected.slice(0, 8).forEach(c => alternatives.push(removeUsedCoupons(coupons, new Set([c.id]))));
+      if ((coupons.streamerRed || []).some(c => result.usedIds.has(c.id))) {
+        alternatives.push({ ...coupons, streamerRed: [] });
+        const names = [...new Set(coupons.streamerRed.map(c => c.streamerName))];
+        names.slice(0, 2).forEach(name => alternatives.push({
+          ...coupons, streamerRed: coupons.streamerRed.filter(c => c.streamerName !== name)
+        }));
+      }
+      return alternatives;
+    }
+
+    function* splitThresholdBaskets(products, coupons, evaluate) {
+      const baskets = new Map();
+      const targets = new Map();
+      for (const group of ["consumer", "category", "streamer", "coupon"]) {
+        for (const coupon of coupons[group] || []) {
+          const scope = products.filter(p => isSingleProductLayer(group)
+            ? isCouponForProduct(coupon, p)
+            : normalizeProductIds(coupon.productIds).includes(productKey(p)));
+          if (!scope.length) continue;
+          const layer = group === "consumer" ? "red" : group;
+          const thresholds = [numberValue(coupon.threshold), ...(group === "consumer" && coupon.canInflate
+            ? normalizeInflateOptions(coupon).map(o => o.threshold) : [])];
+          thresholds.filter(t => t > 0).forEach(threshold => {
+            targets.set(`${layer}:${threshold}:${splitBasketKey(scope)}`, { scope, layer, threshold });
+          });
+        }
+      }
+      for (const { scope, layer, threshold } of [...targets.values()].slice(0, 32)) {
+        for (const direction of [1, -1]) {
+          const sorted = [...scope].sort((a, b) => direction * (a.price - b.price));
+          const prefix = count => {
+            const basket = [];
+            for (const p of sorted) {
+              const qty = Math.min(count, p.qty);
+              if (qty > 0) basket.push(splitProductQuantity(p, qty));
+              count -= qty;
+            }
+            return basket;
+          };
+          let low = 1;
+          let high = scope.reduce((sum, p) => sum + p.qty, 0);
+          const maxCount = high;
+          // Probe the actual pre-coupon balance, including earlier layers, not list price.
+          while (low < high) {
+            const mid = Math.floor((low + high) / 2);
+            const result = yield* evaluate(prefix(mid), coupons, layer);
+            if (!result) return [...baskets.values()];
+            if (result.final + 1e-9 >= threshold) high = mid;
+            else low = mid + 1;
+          }
+          for (const count of new Set([Math.max(1, low - 1), low, Math.min(maxCount, low + 1)])) {
+            const basket = prefix(count);
+            baskets.set(splitBasketKey(basket), basket);
+            const rest = subtractSplitBasket(products, basket);
+            if (rest.length) baskets.set(splitBasketKey(rest), rest);
+          }
+        }
+      }
+      return [...baskets.values()];
+    }
+
+    function* searchOrderSplits(products, coupons, current, settings, options = {}) {
+      const budget = options.budget ?? 12000;
+      const beamWidth = options.beamWidth ?? 10;
+      const cache = new Map();
+      let evaluations = 0;
+      let best = { total: orderPayable(current), orders: [{ products, result: current }] };
+      let frontier = [{ remaining: products, coupons, orders: [], paid: 0 }];
+      const evaluate = function* (basket, available, stopBefore = null) {
+        const key = splitBasketKey(basket) + splitCouponKey(available) + ":" + stopBefore;
+        if (cache.has(key)) return cache.get(key);
+        if (evaluations >= budget) return null;
+        const result = calculateOrder(basket, available, settings, stopBefore);
+        cache.set(key, result);
+        evaluations += 1;
+        yield evaluations;
+        return result;
+      };
+      const record = (orders, total) => {
+        total = Math.round(total * 100) / 100;
+        if (total < best.total - 0.005 || (Math.abs(total - best.total) < 0.005 && orders.length < best.orders.length)) {
+          best = { orders, total };
+        }
+      };
+
+      while (frontier.length && evaluations < budget) {
+        const nextStates = new Map();
+        for (const path of frontier) {
+          const monetaryBaskets = path.remaining.reduce((sum, p) => sum + p.qty, 0) > 8
+            ? yield* splitThresholdBaskets(path.remaining, path.coupons, evaluate) : [];
+          const candidateMap = new Map();
+          [path.remaining, ...monetaryBaskets, ...splitBasketCandidates(path.remaining, path.coupons)]
+            .forEach(basket => candidateMap.set(splitBasketKey(basket), basket));
+          const candidates = [...candidateMap.values()];
+          for (const basket of candidates) {
+            const remaining = subtractSplitBasket(path.remaining, basket);
+            const base = yield* evaluate(basket, path.coupons);
+            if (!base) break;
+            const variants = [path.coupons, ...splitCouponAlternatives(path.coupons, base)];
+            const seenVariants = new Set();
+            for (const available of variants) {
+              const result = yield* evaluate(basket, available);
+              if (!result) break;
+              const signature = JSON.stringify([...result.usedIds].sort()) + ":" + orderPayable(result);
+              if (seenVariants.has(signature)) continue;
+              seenVariants.add(signature);
+              const paid = path.paid + orderPayable(result);
+              if (paid > best.total + 0.005) continue;
+              const orders = [...path.orders, { products: basket, result }];
+              if (!remaining.length) {
+                record(orders, paid);
+                continue;
+              }
+              // Remove only coupons actually spent, not those reserved by this variant.
+              const availableNext = removeUsedCoupons(path.coupons, result.usedIds);
+              const tail = yield* evaluate(remaining, availableNext);
+              if (!tail) break;
+              const total = paid + orderPayable(tail);
+              record([...orders, { products: remaining, result: tail }], total);
+              const key = splitBasketKey(remaining) + splitCouponKey(availableNext);
+              const previous = nextStates.get(key);
+              if (!previous || paid < previous.paid - 0.005) {
+                nextStates.set(key, { remaining, coupons: availableNext, orders, paid, total });
+              }
+            }
+            if (evaluations >= budget) break;
+          }
+          if (evaluations >= budget) break;
+        }
+        frontier = [...nextStates.values()].sort((a, b) => a.total - b.total || a.paid - b.paid).slice(0, beamWidth);
+        yield evaluations;
+      }
+      return { ...best, evaluations, budgetReached: evaluations >= budget };
+    }
+
+    function removeUsedCoupons(coupons, usedIds) {
+      const next = {};
+      for (const key of Object.keys(coupons)) {
+        next[key] = coupons[key].filter(c => !usedIds.has(c.id));
+      }
+      return next;
+    }
+
+    function escapeHtml(value) {
+      return String(value)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;");
+    }
+
+    function bindEvents() {
+      document.getElementById("addProductBtn").addEventListener("click", () => {
+        readForm();
+        state.products.push({ id: uid++, name: "新商品", price: 0, qty: 1, vipEligible: true, presale: false, depositPaid: 0, tradeInEligible: false, tradeInRate: 0, locked: true });
+        renderAll({ calculate: false });
+      });
+
+      document.getElementById("couponSections").addEventListener("click", (event) => {
+        const addKey = event.target.closest("[data-add-coupon]")?.dataset.addCoupon;
+        const addStreamerRedItem = event.target.closest("[data-add-streamer-red-item]")?.dataset.addStreamerRedItem;
+        const removeStreamerRedGroup = event.target.closest("[data-remove-streamer-red-group]")?.dataset.removeStreamerRedGroup;
+        const addInflateOption = event.target.closest("[data-add-inflate-option]");
+        const removeInflateOption = event.target.closest("[data-remove-inflate-option]")?.dataset.removeInflateOption;
+        const removeSpec = event.target.closest("[data-remove-coupon]")?.dataset.removeCoupon;
+        if (addKey) {
+          readForm();
+          if (addKey === "streamerRed") {
+            const streamerGroupId = uid++;
+            state.coupons.streamerRed.push({
+              id: uid++,
+              streamerGroupId,
+              streamerName: "主播A",
+              productIds: [],
+              kind: "fixed",
+              threshold: 0,
+              value: 0,
+              cap: 0,
+              thresholdRed: false
+            });
+            renderAll({ calculate: false });
+            return;
+          }
+          const meta = COUPON_META[addKey];
+          state.coupons[addKey].push({
+            id: uid++,
+            customName: defaultCustomName(addKey),
+            streamerName: needsStreamerName(addKey) ? "主播A" : "",
+            productId: isSingleProductLayer(addKey) ? state.products[0]?.id || "" : "",
+            productIds: isMultiProductLayer(addKey) ? state.products.map(product => product.id) : [],
+            kind: meta.defaultKind,
+            threshold: 0,
+            value: meta.defaultKind === "percent" ? 0.95 : 0,
+            cap: 0,
+            canInflate: false,
+            inflatedThreshold: 0,
+            inflatedValue: 0,
+            inflateOptions: [],
+            thresholdRed: false
+          });
+          renderAll({ calculate: false });
+        }
+        if (addInflateOption) {
+          readForm();
+          const row = event.target.closest("[data-coupon-group='consumer']");
+          const couponId = numberValue(row?.dataset.couponId);
+          const coupon = (state.coupons.consumer || []).find(item => Number(item.id) === couponId);
+          if (coupon) {
+            coupon.canInflate = true;
+            coupon.inflateOptions = Array.isArray(coupon.inflateOptions) ? coupon.inflateOptions : normalizeInflateOptions(coupon);
+            coupon.inflateOptions.push({ id: uid++, threshold: 0, value: 0 });
+          }
+          renderAll({ calculate: false });
+        }
+        if (removeInflateOption) {
+          readForm();
+          const row = event.target.closest("[data-coupon-group='consumer']");
+          const couponId = numberValue(row?.dataset.couponId);
+          const coupon = (state.coupons.consumer || []).find(item => Number(item.id) === couponId);
+          if (coupon) {
+            coupon.inflateOptions = normalizeInflateOptions(coupon).filter(option => String(option.id) !== String(removeInflateOption));
+          }
+          renderAll({ calculate: false });
+        }
+        if (addStreamerRedItem) {
+          readForm();
+          const groupId = numberValue(addStreamerRedItem);
+          const base = (state.coupons.streamerRed || []).find(c => Number(c.streamerGroupId) === groupId);
+          state.coupons.streamerRed.push({
+            id: uid++,
+            streamerGroupId: groupId,
+            streamerName: base?.streamerName || "主播A",
+            productIds: [...(base?.productIds || [])],
+            kind: "fixed",
+            threshold: 0,
+            value: 0,
+            cap: 0,
+            thresholdRed: false
+          });
+          renderAll({ calculate: false });
+        }
+        if (removeStreamerRedGroup) {
+          readForm();
+          const groupId = numberValue(removeStreamerRedGroup);
+          state.coupons.streamerRed = (state.coupons.streamerRed || []).filter(c => Number(c.streamerGroupId) !== groupId);
+          renderAll({ calculate: false });
+        }
+        if (removeSpec) {
+          readForm();
+          const [group, id] = removeSpec.split(":");
+          state.coupons[group] = state.coupons[group].filter(c => c.id !== Number(id));
+          renderAll({ calculate: false });
+        }
+      });
+
+      document.getElementById("productRows").addEventListener("click", (event) => {
+        const id = event.target.closest("[data-remove-product]")?.dataset.removeProduct;
+        if (!id) return;
+        readForm();
+        state.products = state.products.filter(p => p.id !== Number(id));
+        if (!state.products.length) state.products.push({ id: uid++, name: "新商品", price: 0, qty: 1, vipEligible: true, presale: false, depositPaid: 0, tradeInEligible: false, tradeInRate: 0, locked: true });
+        renderAll({ calculate: false });
+      });
+
+      document.getElementById("calculateBtn").addEventListener("click", runCalculation);
+
+      document.getElementById("downloadDataBtn").addEventListener("click", downloadCurrentData);
+
+      document.getElementById("uploadDataBtn").addEventListener("click", () => {
+        document.getElementById("uploadDataInput").click();
+      });
+
+      document.getElementById("uploadDataInput").addEventListener("change", (event) => {
+        uploadDataFile(event.target.files?.[0]);
+        event.target.value = "";
+      });
+
+      document.getElementById("resetBtn").addEventListener("click", () => {
+        defaults();
+        renderAll();
+        showToast("已载入示例数据。");
+      });
+
+      document.body.addEventListener("input", (event) => {
+        if (event.target.matches("input, select")) handleFormChanged();
+      });
+      document.body.addEventListener("change", (event) => {
+        if (event.target.matches("[data-field='presale'], [data-field='tradeInEligible']")) {
+          updateProductSpecialControls(event.target.closest("[data-product-id]"));
+        }
+        if (event.target.matches("input, select")) handleFormChanged();
+      });
+    }
+
+    function showToast(message) {
+      const toast = document.getElementById("toast");
+      toast.textContent = message;
+      toast.classList.add("show");
+      window.clearTimeout(showToast.timer);
+      showToast.timer = window.setTimeout(() => toast.classList.remove("show"), 1800);
+    }
+
+    function renderAll({ calculate = true } = {}) {
+      renderProducts();
+      renderCouponSections();
+      if (calculate) {
+        renderResult();
+      } else {
+        refreshCouponPreviews();
+        renderValidationWarnings();
+        markResultStale();
+      }
+    }
+
+    initializeBlankState();
+    applySettings({ is88Vip: false });
+    bindEvents();
+    renderAll({ calculate: false });
+    renderEmptyResult();
+  </script>
+</body>
+</html>
